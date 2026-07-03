@@ -1,0 +1,102 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pinyin Pal MVP</title>
+  <link rel="stylesheet" href="/frontend/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Research MVP</p>
+        <h1>Pinyin Pal</h1>
+        <p class="subtitle">Pronunciation practice with structured error logging for Mandarin learners.</p>
+      </div>
+      <section class="session-panel" aria-label="Participant details">
+        <label>
+          Anonymous session
+          <input id="sessionId" readonly>
+        </label>
+        <label>
+          First language
+          <input id="learnerLanguage" placeholder="e.g. English, Spanish, Korean">
+        </label>
+      </section>
+    </header>
+
+    <section class="layout-grid">
+      <aside class="module-list" aria-label="Learning modules">
+        <h2>Modules</h2>
+        <div id="moduleList"></div>
+      </aside>
+
+      <section class="practice-card" aria-label="Pronunciation practice">
+        <div class="target-row">
+          <div>
+            <p class="eyebrow" id="moduleName">Module</p>
+            <h2 id="targetDisplay">ma1</h2>
+            <p id="targetHanzi" class="hanzi">妈</p>
+          </div>
+          <button id="speakButton" type="button">Listen</button>
+        </div>
+
+        <p id="targetExplanation" class="target-note"></p>
+
+        <form id="attemptForm" class="attempt-form">
+          <label>
+            Type what the learner said
+            <input id="attemptInput" autocomplete="off" placeholder="Example: ma3">
+          </label>
+          <div class="button-row">
+            <button type="submit">Check and log</button>
+            <button id="nextButton" type="button" class="secondary">Next target</button>
+          </div>
+        </form>
+
+        <div class="recorder" aria-label="Recording controls">
+          <p>Optional recording for facilitator review</p>
+          <div class="button-row">
+            <button id="recordButton" type="button" class="secondary">Record</button>
+            <button id="stopButton" type="button" class="secondary" disabled>Stop</button>
+            <button id="playButton" type="button" class="secondary" disabled>Play</button>
+          </div>
+          <p id="recordingStatus" class="muted">Recording stays in this browser session and is not uploaded.</p>
+        </div>
+
+        <section id="feedback" class="feedback empty" aria-live="polite">
+          Submit an attempt to see feedback.
+        </section>
+      </section>
+    </section>
+
+    <section class="log-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Session Attempts</h2>
+          <p>Saved to <code>data/error_logs.json</code> through the local backend.</p>
+        </div>
+        <button id="refreshLogs" type="button" class="secondary">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Target</th>
+              <th>Input</th>
+              <th>Error</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody id="attemptRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/frontend/app.js"></script>
+</body>
+</html>
+
