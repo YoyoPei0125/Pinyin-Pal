@@ -1,0 +1,1815 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pinyin Pal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Noto+Sans:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --cream:#FFF7E9; --cream-2:#FFEFD6; --ink:#5A4A3F; --panda:#4A4036;
+    --leaf:#9BD976; --leaf-soft:#C6EFA6; --leaf-d:#79c455;
+    --sky:#BFE9FF; --sky-soft:#E3F6FF;
+    --berry:#FF9DB0; --berry-d:#F47A93;
+    --tang:#FFB867; --tang-d:#F59E3D;
+    --grape:#C9B6F2; --grape-d:#AD96E0;
+    --butter:#FFE08A; --butter-d:#F5C95A;
+    --mint:#97E0C8; --mint-d:#6FCBAC;
+    --rose:#FF8FA3; --rose-d:#EE6D85;
+    --font:"Baloo 2","Comic Sans MS","Chalkboard SE",system-ui,sans-serif;
+    --pinyin:"Noto Sans","Baloo 2",system-ui,sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; }
+  body {
+    font-family:var(--font); color:var(--ink);
+    background:
+      radial-gradient(140% 70% at 50% 120%, var(--leaf-soft) 0%, transparent 42%),
+      radial-gradient(120% 60% at 50% -15%, var(--sky) 0%, transparent 50%),
+      linear-gradient(180deg, var(--sky-soft) 0%, var(--cream) 30%, var(--cream) 100%);
+    min-height:100%; display:flex; flex-direction:column; align-items:center;
+    padding:16px 16px 60px; -webkit-tap-highlight-color:transparent; overflow-x:hidden; position:relative;
+  }
+  .cloud { position:fixed; background:#fff; border-radius:50px; opacity:.7; z-index:0; pointer-events:none; }
+  .cloud::before,.cloud::after { content:""; position:absolute; background:#fff; border-radius:50%; }
+  .cloud.a { width:90px; height:30px; top:70px; left:5%; animation:drift 26s linear infinite; }
+  .cloud.b { width:70px; height:24px; top:140px; right:7%; animation:drift 34s linear infinite reverse; }
+  .cloud.a::before { width:40px; height:40px; top:-18px; left:14px; }
+  .cloud.a::after  { width:30px; height:30px; top:-12px; left:48px; }
+  .cloud.b::before { width:32px; height:32px; top:-14px; left:12px; }
+  .cloud.b::after  { width:24px; height:24px; top:-8px; left:38px; }
+  @keyframes drift { from{transform:translateX(0);} to{transform:translateX(20px);} }
+
+  .app { width:100%; max-width:720px; position:relative; z-index:1; }
+
+  header { text-align:center; margin-bottom:6px; }
+  .mascot { width:104px; height:104px; filter:drop-shadow(0 8px 0 rgba(90,74,63,.12)); transition:transform .3s cubic-bezier(.34,1.56,.64,1); }
+  .mascot.cheer { animation:cheer .7s ease; }
+  @keyframes cheer { 0%,100%{transform:translateY(0) rotate(0) scale(1);} 30%{transform:translateY(-16px) rotate(-7deg) scale(1.05);} 60%{transform:translateY(-7px) rotate(7deg) scale(1.03);} }
+  .titles h1 { font-size:2.4rem; font-weight:800; line-height:1; color:var(--panda); text-shadow:0 3px 0 #fff, 0 4px 0 rgba(90,74,63,.1); }
+  .titles h1 .heart { color:var(--berry); display:inline-block; animation:beat 1.8s ease-in-out infinite; }
+  @keyframes beat { 0%,100%{transform:scale(1);} 50%{transform:scale(1.18);} }
+  .titles p { margin-top:5px; font-size:.98rem; font-weight:600; color:var(--mint-d); }
+
+  .units { display:grid; grid-template-columns:1fr; gap:15px; margin-top:24px; }
+  .unit { display:flex; align-items:center; gap:16px; text-align:left; font-family:var(--font); border:4px solid #fff; border-radius:30px; padding:16px 20px; cursor:pointer; color:#fff; box-shadow:0 9px 0 var(--c-dark,rgba(0,0,0,.15)); transition:transform .14s cubic-bezier(.34,1.56,.64,1), box-shadow .14s; }
+  .unit:active { transform:translateY(5px); box-shadow:0 4px 0 var(--c-dark,rgba(0,0,0,.15)); }
+  .unit .big { font-size:2.2rem; flex:none; width:50px; text-align:center; }
+  .unit .txt h2 { font-size:1.35rem; font-weight:800; line-height:1.1; }
+  .unit .txt span { font-size:.92rem; font-weight:600; opacity:.92; }
+  .unit .arrow { margin-left:auto; font-size:1.7rem; opacity:.85; }
+  .u-leaf{background:var(--leaf);--c-dark:var(--leaf-d);} .u-berry{background:var(--berry);--c-dark:var(--berry-d);}
+  .u-rose{background:var(--rose);--c-dark:var(--rose-d);} .u-sky{background:#7FC8EF;--c-dark:#5BACD8;}
+  .u-grape{background:var(--grape);--c-dark:var(--grape-d);} .u-tang{background:var(--tang);--c-dark:var(--tang-d);}
+
+  .topbar { display:flex; align-items:center; gap:12px; margin:6px 0 16px; flex-wrap:wrap; }
+  .back { font-family:var(--font); font-size:1.05rem; font-weight:700; color:var(--panda); background:#fff; border:none; border-radius:18px; padding:9px 16px; cursor:pointer; box-shadow:0 5px 0 rgba(90,74,63,.1); }
+  .back:active { transform:translateY(2px); }
+  .topbar h2 { font-size:1.3rem; font-weight:800; color:var(--panda); }
+
+  .chapters { display:grid; gap:14px; }
+  .chapter { display:flex; align-items:center; gap:14px; font-family:var(--font); text-align:left; background:#fff; border:4px solid var(--leaf-soft); border-radius:26px; padding:16px 18px; cursor:pointer; box-shadow:0 8px 0 rgba(90,74,63,.1); transition:transform .14s, box-shadow .14s; }
+  .chapter:active { transform:translateY(4px); box-shadow:0 4px 0 rgba(90,74,63,.1); }
+  .chapter .num { flex:none; width:42px; height:42px; border-radius:50%; background:var(--leaf); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:800; }
+  .chapter .ctxt h3 { font-size:1.2rem; font-weight:800; color:var(--panda); }
+  .chapter .ctxt span { font-size:.9rem; font-weight:600; color:var(--mint-d); }
+  .chapter .go { margin-left:auto; font-size:1.4rem; color:var(--leaf-d); }
+  .chapter.test { border-color:var(--butter-d); } .chapter.test .num { background:var(--tang); } .chapter.test .go { color:var(--tang-d); }
+  .chapter.bigtest { border-color:var(--rose-d); background:#FFF1F4; } .chapter.bigtest .num { background:var(--rose-d); } .chapter.bigtest .go { color:var(--rose-d); }
+
+  .rhyme { background:#FFF3D6; border:3px dashed var(--butter-d); border-radius:24px; padding:16px 18px; margin-bottom:16px; text-align:center; color:var(--tang-d); font-weight:700; }
+  .rhyme .rt { font-size:1.05rem; margin-bottom:6px; }
+  .rhyme .rb { font-size:1.25rem; color:var(--panda); white-space:pre-line; line-height:1.5; }
+  .rhyme .play-rhyme { margin-top:10px; font-family:var(--font); font-weight:700; font-size:1rem; color:#fff; background:var(--tang); border:none; border-radius:16px; padding:8px 18px; cursor:pointer; box-shadow:0 4px 0 var(--tang-d); }
+  .rhyme .play-rhyme:active { transform:translateY(2px); }
+
+  .strip { display:flex; gap:10px; overflow-x:auto; padding:6px 2px 14px; }
+  .chip { flex:none; font-family:var(--font); font-size:1.25rem; font-weight:700; color:var(--panda); background:#fff; border:3px solid var(--leaf-soft); border-radius:18px; padding:9px 15px; cursor:pointer; transition:transform .1s, background .2s, border-color .2s; }
+  .chip.active { background:var(--leaf); color:#fff; border-color:var(--leaf-d); }
+  .chip:active { transform:translateY(2px); }
+
+  .learn-card { background:#fff; border:4px solid var(--leaf-soft); border-radius:36px; padding:22px 18px 26px; box-shadow:0 10px 0 rgba(90,74,63,.1); text-align:center; margin-bottom:16px; }
+  .display { font-size:4.6rem; font-weight:800; color:var(--leaf-d); line-height:1; margin-bottom:4px; }
+  .sub-char { font-size:1.15rem; font-weight:600; color:var(--mint-d); margin-bottom:16px; }
+  .listen { font-family:var(--font); font-size:1.3rem; font-weight:800; color:#fff; background:var(--tang); border:none; border-radius:22px; padding:15px 28px; cursor:pointer; box-shadow:0 6px 0 var(--tang-d); transition:transform .1s; }
+  .listen:active { transform:translateY(3px); box-shadow:0 3px 0 var(--tang-d); }
+
+  .rec-row { display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+  .rec-btn { font-family:var(--font); font-size:1.05rem; font-weight:700; border:none; border-radius:18px; padding:12px 18px; cursor:pointer; transition:transform .1s; }
+  .rec-btn:active { transform:translateY(2px); }
+  .rec-start { background:var(--berry); color:#fff; box-shadow:0 5px 0 var(--berry-d); }
+  .rec-stop  { background:var(--rose-d); color:#fff; box-shadow:0 5px 0 #c8536b; }
+  .rec-play  { background:var(--mint); color:#fff; box-shadow:0 5px 0 var(--mint-d); }
+  .rec-btn:disabled { opacity:.4; }
+  .rec-hint { font-size:.85rem; color:var(--mint-d); font-weight:600; margin-top:8px; }
+
+  .rule { background:#fff; border:4px solid var(--rose); border-radius:30px; padding:20px; box-shadow:0 9px 0 rgba(90,74,63,.1); margin-bottom:16px; text-align:center; }
+  .rule h3 { font-size:1.25rem; color:var(--rose-d); margin-bottom:10px; }
+  .rule .order { font-size:2.1rem; font-weight:800; color:var(--panda); letter-spacing:6px; margin:6px 0 12px; }
+  .rule .order b { color:var(--rose-d); }
+  .rule p { font-size:1.02rem; font-weight:600; color:var(--ink); line-height:1.5; }
+  .rule .demo { display:inline-flex; gap:8px; margin-top:12px; flex-wrap:wrap; justify-content:center; }
+  .rule .demo button { font-family:var(--font); font-size:1.4rem; font-weight:800; color:#fff; background:var(--rose); border:none; border-radius:16px; padding:8px 14px; cursor:pointer; box-shadow:0 4px 0 var(--rose-d); }
+  .rule .demo button:active { transform:translateY(2px); }
+  .rule-test { text-align:center; margin-top:6px; }
+
+  .write { background:#fff; border:4px solid var(--sky); border-radius:36px; padding:18px; box-shadow:0 10px 0 rgba(90,74,63,.1); }
+  .write .wlabel { font-size:1.05rem; font-weight:700; color:#5BACD8; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .canvas-wrap { position:relative; border-radius:22px; overflow:hidden; background:#FBFEFF; border:2px dashed var(--sky); }
+  canvas { display:block; width:100%; height:160px; touch-action:none; cursor:crosshair; }
+  .wbtns { display:flex; gap:10px; margin-top:12px; }
+  .wbtn { flex:1; font-family:var(--font); font-size:1rem; font-weight:700; border:none; border-radius:16px; padding:11px; cursor:pointer; }
+  .wbtn.demo { background:var(--butter); color:var(--panda); box-shadow:0 4px 0 var(--butter-d); }
+  .wbtn.clear { background:var(--sky-soft); color:#5BACD8; }
+  .wbtn.check { background:var(--leaf); color:#fff; box-shadow:0 4px 0 var(--leaf-d); }
+  .wbtn:active { transform:translateY(2px); }
+  .wdone { text-align:center; margin-top:10px; font-size:1.1rem; font-weight:800; color:var(--leaf-d); min-height:24px; }
+
+  .nav { display:flex; gap:12px; margin-top:16px; }
+  .nav button { flex:1; font-family:var(--font); font-size:1.1rem; font-weight:700; color:var(--panda); background:#fff; border:none; border-radius:20px; padding:13px; cursor:pointer; box-shadow:0 6px 0 rgba(90,74,63,.1); }
+  .nav button:active { transform:translateY(3px); box-shadow:0 3px 0 rgba(90,74,63,.1); }
+  .nav button:disabled { opacity:.4; }
+
+  .text-card { background:#fff; border:4px solid var(--grape); border-radius:36px; padding:22px 16px; box-shadow:0 10px 0 rgba(90,74,63,.1); margin-bottom:16px; }
+  .line { display:flex; flex-wrap:wrap; justify-content:center; gap:6px 12px; margin-bottom:14px; }
+  .line:last-child { margin-bottom:0; }
+  .word { text-align:center; cursor:pointer; padding:6px 8px; border-radius:14px; transition:background .2s; }
+  .word.on { background:var(--butter); }
+  .word .py { display:block; font-size:1.05rem; font-weight:700; color:var(--grape-d); }
+  /* pinyin-safe font wherever tone marks appear */
+  .word .py, .tone, .rule .order, .rule .demo button, .display, .q-big { font-family:var(--pinyin); }
+  .word .han { display:block; font-size:1.9rem; font-weight:700; color:var(--panda); }
+  .readall { display:block; margin:0 auto; font-family:var(--font); font-size:1.3rem; font-weight:800; color:#fff; background:var(--grape-d); border:none; border-radius:24px; padding:13px 28px; cursor:pointer; box-shadow:0 6px 0 #8367C7; }
+  .enline { text-align:center; font-size:1rem; font-weight:600; color:var(--mint-d); margin:-4px 0 18px; font-style:italic; }
+  .story-head { text-align:center; margin-bottom:14px; }
+  .story-head .se { font-size:2.4rem; }
+  .story-head h3 { font-size:1.5rem; color:var(--rose-d); font-weight:800; }
+  .story-head .en { font-size:1rem; color:var(--mint-d); font-weight:600; }
+  .story-head .kind { display:inline-block; margin-top:6px; font-size:.85rem; font-weight:700; color:#fff; background:var(--rose); border-radius:12px; padding:3px 12px; }
+  .moral { background:#FFF1F4; border:3px dashed var(--rose-d); border-radius:22px; padding:14px 16px; margin-top:16px; text-align:center; font-size:1rem; font-weight:700; color:var(--rose-d); white-space:pre-line; line-height:1.5; }
+  .chapter .num.story { background:var(--rose); font-size:1.4rem; }
+  /* storybook */
+  .book { background:#fff; border:4px solid var(--rose); border-radius:36px; padding:16px; box-shadow:0 10px 0 rgba(90,74,63,.1); }
+  .book-art { width:100%; aspect-ratio:16/9; border-radius:22px; overflow:hidden; background:#EAF6FF; margin-bottom:16px; }
+  .book-text { display:flex; flex-wrap:wrap; justify-content:center; gap:6px 12px; margin-bottom:10px; }
+  .book-en { text-align:center; font-size:1.05rem; font-weight:600; color:var(--mint-d); font-style:italic; margin-bottom:14px; }
+  .book .readall { font-size:1.15rem; padding:11px 24px; background:var(--rose-d); box-shadow:0 6px 0 #c8536b; }
+  .book-moral { text-align:center; }
+  .book-moral .ms { font-size:3rem; }
+  .book-moral .mt { font-size:1.2rem; font-weight:800; color:var(--rose-d); white-space:pre-line; line-height:1.6; margin-top:8px; }
+  .book-nav { display:flex; align-items:center; justify-content:center; gap:18px; margin-top:16px; }
+  .book-nav button { font-family:var(--font); font-size:1.5rem; font-weight:800; color:#fff; background:var(--rose); border:none; width:60px; height:60px; border-radius:50%; cursor:pointer; box-shadow:0 5px 0 var(--rose-d); }
+  .book-nav button:active { transform:translateY(2px); }
+  .book-nav button:disabled { opacity:.35; }
+  .book-page { font-size:1.1rem; font-weight:800; color:var(--panda); min-width:64px; text-align:center; }
+  .book-para { font-size:1.5rem; font-weight:600; color:var(--panda); line-height:2; text-align:left; cursor:pointer; padding:4px 6px; border-radius:14px; }
+  .book-para:active { background:var(--cream-2); }
+  .keys-title { margin-top:18px; font-size:1.05rem; font-weight:800; color:var(--rose-d); text-align:center; }
+  .keys-box { margin-top:10px; }
+  .tone-tip { margin:10px 4px 14px; background:#FFF8E6; border:2px dashed var(--butter-d); border-radius:16px; padding:10px 14px; font-size:.92rem; font-weight:600; color:var(--panda); line-height:1.5; text-align:left; }
+  .tone-tip b { color:var(--tang-d); }
+  .tone-tip .en { color:var(--mint-d); font-style:italic; font-size:.88rem; }
+  .py.neutral { color:#B9A9C9; }
+  .key-line { background:#FFF1F4; border-radius:18px; padding:8px 6px; margin-bottom:10px; }
+  .key-en { text-align:center; font-size:.95rem; font-weight:600; color:var(--mint-d); font-style:italic; margin-top:2px; }
+  .readall:active { transform:translateY(3px); box-shadow:0 3px 0 #8367C7; }
+
+  /* quiz */
+  .quiz { background:#fff; border:4px solid var(--butter-d); border-radius:36px; padding:22px 18px; box-shadow:0 10px 0 rgba(90,74,63,.1); text-align:center; }
+  .q-top { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .q-bar { flex:1; height:14px; background:var(--cream-2); border-radius:10px; overflow:hidden; }
+  .q-bar > div { height:100%; width:0%; background:var(--leaf); border-radius:10px; transition:width .3s ease; }
+  .q-hearts { font-size:1.1rem; }
+  .q-type { font-size:1rem; font-weight:700; color:var(--tang-d); margin-bottom:6px; }
+  .q-prompt { font-size:1.15rem; font-weight:700; color:var(--panda); margin-bottom:14px; }
+  .q-big { font-size:3rem; font-weight:800; color:var(--grape-d); margin:6px 0 14px; letter-spacing:4px; }
+  .q-opts { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:8px; }
+  .q-opts.three { grid-template-columns:repeat(3,1fr); }
+  .q-opt { font-family:var(--font); font-size:1.8rem; font-weight:800; color:var(--panda); background:var(--cream); border:4px solid var(--leaf-soft); border-radius:24px; padding:18px 8px; cursor:pointer; transition:transform .1s, background .2s, border-color .2s; }
+  .q-opt:active { transform:translateY(2px); }
+  .q-opt.right { background:var(--leaf); color:#fff; border-color:var(--leaf-d); }
+  .q-opt.wrong { background:#FFE3E8; border-color:var(--berry); }
+  .q-feedback { min-height:28px; margin-top:14px; font-size:1.2rem; font-weight:800; }
+  .q-feedback.good { color:var(--leaf-d); } .q-feedback.bad { color:var(--berry-d); }
+  .q-result { font-size:1.4rem; font-weight:800; color:var(--panda); }
+  .q-result .big { font-size:3rem; display:block; margin:10px 0; }
+  .q-cont { margin-top:14px; }
+
+  .hidden { display:none !important; }
+  footer { margin-top:30px; font-size:.86rem; color:var(--mint-d); text-align:center; opacity:.85; font-weight:600; }
+  @media (max-width:420px){ .titles h1{font-size:2rem;} .display{font-size:3.8rem;} .mascot{width:90px;height:90px;} .unit .txt h2{font-size:1.15rem;} }
+</style>
+</head>
+<body>
+<div class="cloud a"></div><div class="cloud b"></div>
+
+<div class="app">
+  <header>
+    <svg class="mascot" id="mascot" viewBox="0 0 120 120" aria-hidden="true">
+      <path d="M58 96 Q44 116 36 110 Q46 102 50 90 Z" fill="#3FB6E0"/>
+      <path d="M62 96 Q76 116 84 110 Q74 102 70 90 Z" fill="#3FB6E0"/>
+      <ellipse cx="60" cy="78" rx="30" ry="32" fill="#5FD16A"/>
+      <ellipse cx="60" cy="88" rx="20" ry="22" fill="#FFE08A"/>
+      <path d="M34 70 Q24 86 36 100 Q44 88 44 74 Z" fill="#46BE54"/>
+      <circle cx="60" cy="46" r="30" fill="#5FD16A"/>
+      <path d="M60 17 Q56 4 62 6 Q60 12 64 18 Z" fill="#FF7A8A"/>
+      <path d="M66 18 Q70 6 74 10 Q68 14 70 20 Z" fill="#FFB867"/>
+      <ellipse cx="60" cy="52" rx="22" ry="20" fill="#FFFDF8"/>
+      <circle cx="49" cy="46" r="11" fill="#fff" stroke="#E7EFD9" stroke-width="2"/>
+      <circle cx="71" cy="46" r="11" fill="#fff" stroke="#E7EFD9" stroke-width="2"/>
+      <g class="eyes">
+        <circle cx="50" cy="47" r="5.5" fill="#3A3228"/><circle cx="70" cy="47" r="5.5" fill="#3A3228"/>
+        <circle cx="52" cy="45" r="2" fill="#fff"/><circle cx="72" cy="45" r="2" fill="#fff"/>
+      </g>
+      <path d="M52 58 Q60 56 68 58 Q64 70 60 70 Q56 70 52 58 Z" fill="#FF9F40"/>
+      <path d="M53 60 Q60 68 67 60" stroke="#E2832B" stroke-width="1.6" fill="none"/>
+      <circle cx="40" cy="56" r="5.5" fill="#FF9DB0" opacity=".55"/>
+      <circle cx="80" cy="56" r="5.5" fill="#FF9DB0" opacity=".55"/>
+      <path d="M52 108 l-4 6 M52 108 l0 7 M52 108 l4 6" stroke="#FF9F40" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M68 108 l-4 6 M68 108 l0 7 M68 108 l4 6" stroke="#FF9F40" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+    <div class="titles">
+      <h1>Pinyin&nbsp;Pal<span class="heart"> 鈾?/span></h1>
+      <p>Learn Chinese with Polly the Parrot!</p>
+    </div>
+  </header>
+
+  <section id="home"><div class="units" id="unitList"></div></section>
+
+  <section id="chapters" class="hidden">
+    <div class="topbar"><button class="back" id="chaptersBack" onclick="goHome()">鈫?Back</button><h2 id="chaptersTitle"></h2></div>
+    <div class="chapters" id="chapterList"></div>
+  </section>
+
+  <section id="detail" class="hidden">
+    <div class="topbar"><button class="back" id="detailBack">鈫?Back</button><h2 id="detailTitle"></h2></div>
+    <div id="rhymeSlot"></div>
+    <div class="strip" id="strip"></div>
+    <div class="learn-card">
+      <div class="display" id="display"></div>
+      <div class="sub-char" id="subChar"></div>
+      <button class="listen" onclick="speakCurrent()">馃攰 Listen</button>
+      <div class="rec-row">
+        <button class="rec-btn rec-start" id="recStart" onclick="recStart()">馃帳 Record me</button>
+        <button class="rec-btn rec-stop" id="recStop" onclick="recStop()" disabled>鈴?Stop</button>
+        <button class="rec-btn rec-play" id="recPlay" onclick="recPlay()" disabled>鈻?My voice</button>
+      </div>
+      <div class="rec-hint" id="recHint">Tap 鈥淩ecord me鈥? say it out loud, then play it back!</div>
+    </div>
+    <div class="write">
+      <div class="wlabel">鉁忥笍 Trace it!</div>
+      <div class="canvas-wrap"><canvas id="pad"></canvas></div>
+      <div class="wbtns">
+        <button class="wbtn demo" onclick="demoTrace('pad')">馃憖 Show me</button>
+        <button class="wbtn check" onclick="checkWrite()">鉁?Check</button>
+        <button class="wbtn clear" onclick="clearPad()">鈫?Clear</button>
+      </div>
+      <div class="wdone" id="wdone"></div>
+    </div>
+    <div class="nav">
+      <button id="prevBtn" onclick="step(-1)">鈫?Prev</button>
+      <button id="nextBtn" onclick="step(1)">Next 鈫?/button>
+    </div>
+  </section>
+
+  <section id="rulesView" class="hidden">
+    <div class="topbar"><button class="back" onclick="goHome()">鈫?Back</button><h2>澹拌皟 Tones</h2></div>
+    <div id="ruleRhyme"></div>
+    <div class="rule">
+      <h3>Rule 1 路 澶у摜鍒板皬寮?(who gets the mark)</h3>
+      <div class="order"><b>a</b> &gt; <b>o</b> &gt; <b>e</b> &gt; i &gt; u &gt; 眉</div>
+      <p>If there's an <b>a</b>, it takes the mark. No a? then o or e. The big brothers go first.</p>
+      <div class="demo"><button onclick="speak('濂?)">h菐o</button><button onclick="speak('椋?)">f膿i</button><button onclick="speak('璧?)">z菕u</button></div>
+    </div>
+    <div class="rule">
+      <h3>Rule 2 路 iu &amp; ui (mark the last one)</h3>
+      <div class="order">i<b>奴</b> &nbsp;路&nbsp; u<b>菒</b></div>
+      <p>When <b>i</b> and <b>u</b> are together, the mark goes on whichever comes <b>last</b>.</p>
+      <div class="demo"><button onclick="speak('鍏?)">li霉</button><button onclick="speak('姘?)">shu菒</button></div>
+    </div>
+    <div class="rule">
+      <h3>Rule 3 路 little 眉</h3>
+      <div class="order">n<b>菤</b> &nbsp;路&nbsp; l<b>菧</b></div>
+      <p>The mark sits on top of <b>眉</b>. And after j q x y, 眉 drops its two dots 鈫?u.</p>
+      <div class="demo"><button onclick="speak('濂?)">n菤</button><button onclick="speak('缁?)">l菧</button></div>
+    </div>
+    <div class="rule rule-test">
+      <h3>Ready? Take the tone test 馃弳</h3>
+      <button class="listen" onclick="startQuiz(UNITS.find(u=>u.id==='tones'), 'chapter')">Start test</button>
+    </div>
+  </section>
+
+  <section id="textView" class="hidden">
+    <div class="topbar"><button class="back" id="textBack" onclick="textBack()">鈫?Back</button><h2 id="textTitle"></h2></div>
+    <div id="textRhyme"></div>
+    <div class="text-card" id="textBody"></div>
+    <button class="readall" onclick="readAll()">鈻?Read along</button>
+    <div class="write" id="textWrite" style="margin-top:16px;">
+      <div class="wlabel">鉁忥笍 Write the pinyin!</div>
+      <div class="canvas-wrap"><canvas id="pad2"></canvas></div>
+      <div class="wbtns"><button class="wbtn clear" onclick="clearPad2()">鈫?Clear</button></div>
+    </div>
+  </section>
+
+  <section id="bookView" class="hidden">
+    <div class="topbar"><button class="back" onclick="bookBack()">鈫?Back</button><h2 id="bookTitle"></h2></div>
+    <div class="book">
+      <div class="book-art" id="bookArt"></div>
+      <div class="book-text" id="bookText"></div>
+      <div class="book-en" id="bookEn"></div>
+      <button class="readall" id="bookRead" onclick="readPage()">鈻?Read this page</button>
+    </div>
+    <div class="book-nav">
+      <button id="bookPrev" onclick="bookPage(-1)">鈫?/button>
+      <div class="book-page" id="bookPageNo"></div>
+      <button id="bookNext" onclick="bookPage(1)">鈫?/button>
+    </div>
+  </section>
+
+  <section id="quizView" class="hidden">
+    <div class="topbar"><button class="back" id="quizBack">鈫?Back</button><h2 id="quizTitle">Test 馃弳</h2></div>
+    <div class="quiz" id="quizBody"></div>
+  </section>
+
+  <section id="recordView" class="hidden">
+    <div class="topbar"><button class="back" onclick="goHome()">鈫?Back</button><h2>鉁忥笍 Record stroke templates</h2></div>
+    <div class="rhyme" style="background:#EAF6FF;border-color:#7FC8EF;color:#5BACD8">
+      <div class="rb" style="font-size:1rem;color:#4A4036">Pick a letter, write it with the <b>correct stroke order</b> (lift your hand between strokes). Then Save. Export when done and send the file to merge into the app.</div>
+    </div>
+    <div class="strip" id="recStrip"></div>
+    <div class="write">
+      <div class="wlabel">Writing: <span id="recLetter" style="font-size:1.6rem;color:var(--panda);margin-left:8px"></span> <span id="recCount" style="margin-left:auto;color:var(--mint-d)"></span></div>
+      <div class="canvas-wrap"><canvas id="recPad"></canvas></div>
+      <div class="wbtns">
+        <button class="wbtn demo" onclick="recReplay()">鈻?Preview</button>
+        <button class="wbtn check" onclick="recSave()">馃捑 Save letter</button>
+        <button class="wbtn clear" onclick="recPadClear()">鈫?Redo</button>
+      </div>
+      <div class="wdone" id="recMsg"></div>
+    </div>
+    <div class="nav">
+      <button onclick="recExport()">猬?Export all templates</button>
+    </div>
+  </section>
+
+  <footer>Tip: turn the volume up 馃攬 鈥?works best in Edge or Chrome. Recording asks for mic permission. <span id="gear" style="cursor:pointer;opacity:.5" onclick="openRecord()">鈿欙笍</span></footer>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const mk = arr => arr.map(([s,c])=>({s,c}));
+const INITIALS_1 = mk([["b","鐜?],["p","鍧?],["m","鎽?],["f","浣?],["d","寰?],["t","鐗?],["n","璁?],["l","鍕?]]);
+const INITIALS_2 = mk([["g","鍝?],["k","绉?],["h","鍠?],["j","鍩?],["q","娆?],["x","甯?]]);
+const INITIALS_3 = mk([["zh","鐭?],["ch","铓?],["sh","璇?],["r","鏃?],["z","璧?],["c","闆?],["s","鎬?],["y","鍖?],["w","灞?]]);
+const FINALS_1 = mk([["a","鍟?],["o","鍠?],["e","楣?],["i","琛?],["u","涔?],["眉","楸?]]);
+const FINALS_2 = mk([["ai","鍝?],["ei","璇?],["ui","濞?],["ao","鍑?],["ou","娆?],["iu","浼?],["ie","鑰?],["眉e","绾?],["er","鍎?]]);
+const FINALS_3 = mk([["an","瀹?],["en","鎭?],["in","鍥?],["un","娓?],["ang","鏄?],["eng","闉?],["ing","鑻?],["ong","杞?]]);
+const WHOLE_1 = mk([["zhi","鐭?],["chi","鍚?],["shi","鏄?],["ri","鏃?],["zi","瀛?],["ci","娆?],["si","鍥?]]);
+const WHOLE_2 = mk([["yi","涓€"],["wu","浜?],["yu","楸?],["ye","涔?],["yue","鏈?],["yuan","鍏?],["yin","闊?],["yun","浜?],["ying","楣?]]);
+
+// tone-placement questions: syllable with letters, and index of letter that carries the mark
+const TONE_Q = [
+  {syl:"hao", c:"濂?, mark:1, letters:["h","a","o"]},       // a wins
+  {syl:"fei", c:"椋?, mark:2, letters:["f","e","i"]},       // e
+  {syl:"zou", c:"璧?, mark:2, letters:["z","o","u"]},       // o
+  {syl:"liu", c:"鍏?, mark:2, letters:["l","i","u"]},       // iu -> u (last)
+  {syl:"shui",c:"姘?, mark:3, letters:["s","h","u","i"]},   // ui -> i (last)
+  {syl:"nv",  c:"濂?, mark:1, letters:["n","眉"]},           // 眉
+  {syl:"lv",  c:"缁?, mark:1, letters:["l","眉"]},
+  {syl:"xue", c:"瀛?, mark:2, letters:["x","u","e"]},       // e
+  {syl:"gui", c:"璐?, mark:2, letters:["g","u","i"]},       // ui -> i
+  {syl:"jiu", c:"涔?, mark:2, letters:["j","i","u"]}        // iu -> u
+];
+
+const SENTENCE = [
+  L(["鎴?,"鏄?,"灏?,"楣?,"楣?],["w菕","sh矛","xi菐o","y墨ng","w菙"]),
+  L(["鎴?,"鍙?,"娉?,"鍒?],["w菕","ji脿o","b艒","l矛"]),
+  L(["鎴?,"鐨?,"缇?,"姣?,"鏄?,"缁?,"鑹?,"鐨?],["w菕","de","y菙","m谩o","sh矛","l菧","s猫","de"]),
+  L(["鎴?,"鏈?,"涓€","寮?,"绾?,"鍢?,"宸?],["w菕","y菕u","y矛","zh膩ng","h贸ng","zu菒","ba"]),
+  L(["鎴?,"浼?,"璇?,"寰?,"澶?,"璇?],["w菕","hu矛","shu艒","h臎n","du艒","hu脿"]),
+  L(["鎴?,"鍠?,"娆?,"鍚?,"鏋?,"瀛?],["w菕","x菒","huan","ch墨","gu菕","zi"]),
+  L(["鎴?,"浣?,"鍦?,"澶?,"鏍?,"涓?],["w菕","zh霉","z脿i","d脿","sh霉","sh脿ng"]),
+  L(["鏃?,"涓?,"鎴?,"鍞?,"姝?],["z菐o","shang","w菕","ch脿ng","g膿"]),
+  L(["鎴?,"鐨?,"鏈?,"鍙?,"寰?,"澶?],["w菕","de","p茅ng","you","h臎n","du艒"]),
+  L(["鎴?,"鍠?,"娆?,"瀛?,"鎷?,"闊?],["w菕","x菒","huan","xu茅","p墨n","y墨n"]),
+  L(["鎷?,"闊?,"寰?,"鏈?,"鎰?,"鎬?],["p墨n","y墨n","h臎n","y菕u","y矛","si"]),
+  L(["浣?,"涔?,"鎯?,"瀛?,"鍚?],["n菒","y臎","xi菐ng","xu茅","ma"]),
+  L(["鎴?,"浠?,"涓€","璧?,"瀛?,"鍚?],["w菕","men","y矛","q菒","xu茅","ba"]),
+  L(["璺?,"鎴?,"璇?,"涓€","璇?],["g膿n","w菕","d煤","yi","d煤"]),
+  L(["浣?,"鐪?,"妫?,"锛?],["n菒","zh膿n","b脿ng",""])
+].map(line=>line.filter(w=>w.han!=="锛?&&w.han!==""));
+const SENTENCE_LINES = SENTENCE; // sentence unit shows all 15 lines
+/* ---- helper: build a line of words from parallel arrays ---- */
+function L(hans, pys){ return hans.map((h,i)=>({han:h, c:h, py:pys[i]})); }
+
+/* ============ STORYBOOK ILLUSTRATIONS (SVG) ============ */
+function artWrap(inner, bg){ return '<svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">'+
+  '<rect x="0" y="0" width="320" height="180" rx="22" fill="'+(bg||'#EAF6FF')+'"/>'+inner+'</svg>'; }
+const ART = {
+  spring(){ return artWrap('<circle cx="58" cy="46" r="22" fill="#FFD54A"/><path d="M0 132 Q160 96 320 132 L320 180 L0 180Z" fill="#AED581"/><rect x="156" y="104" width="7" height="34" rx="3" fill="#7CB342"/><ellipse cx="148" cy="106" rx="15" ry="8" fill="#9BD976" transform="rotate(-28 148 106)"/><ellipse cx="171" cy="106" rx="15" ry="8" fill="#9BD976" transform="rotate(28 171 106)"/>', '#E3F6FF'); },
+  sun(){ var r=''; for(var i=0;i<12;i++){ var a=i*Math.PI/6; r+='<line x1="'+(160+Math.cos(a)*40)+'" y1="'+(86+Math.sin(a)*40)+'" x2="'+(160+Math.cos(a)*62)+'" y2="'+(86+Math.sin(a)*62)+'" stroke="#FFB300" stroke-width="6" stroke-linecap="round"/>'; } return artWrap(r+'<circle cx="160" cy="86" r="34" fill="#FFD54A"/><circle cx="150" cy="82" r="4" fill="#7A5A00"/><circle cx="170" cy="82" r="4" fill="#7A5A00"/><path d="M150 96 Q160 104 170 96" stroke="#7A5A00" stroke-width="3" fill="none" stroke-linecap="round"/>', '#FFE7BD'); },
+  harvest(){ var s=''; for(var i=0;i<6;i++){ var x=50+i*40; s+='<rect x="'+(x-2)+'" y="70" width="4" height="70" fill="#C9A227"/><ellipse cx="'+x+'" cy="66" rx="10" ry="18" fill="#F2C744"/>'; } return artWrap('<path d="M0 138 H320 V180 H0Z" fill="#E0B84C"/>'+s+'<circle cx="270" cy="40" r="20" fill="#FFD54A"/>', '#FFF3D6'); },
+  winter(){ var f=''; for(var i=0;i<9;i++){ f+='<text x="'+(20+i*34)+'" y="'+(40+(i%3)*34)+'" font-size="20" fill="#Bcdcef">鉂?/text>'.replace('#Bcdcef','#B8D8EE'); } return artWrap(f+'<path d="M0 140 H320 V180 H0Z" fill="#F4FAFF"/><ellipse cx="160" cy="142" rx="120" ry="14" fill="#E3F0FA"/>', '#D7EAF7'); },
+  dumpling(){ return artWrap('<ellipse cx="160" cy="150" rx="120" ry="20" fill="#EBD9B8"/><g><path d="M110 120 q50 -34 100 0 q-10 18 -50 18 q-40 0 -50 -18Z" fill="#FFF3DD" stroke="#E6C98A" stroke-width="3"/><path d="M112 120 q12 -8 12 4 M134 116 q12 -8 12 4 M156 114 q12 -8 12 4 M178 116 q12 -8 12 4 M198 120 q12 -8 12 4" stroke="#E6C98A" stroke-width="3" fill="none"/></g>', '#FFF7E9'); },
+  lantern(){ var l=''; var xs=[80,160,240]; for(var i=0;i<3;i++){ var x=xs[i],y=70+(i===1?14:0); l+='<line x1="'+x+'" y1="0" x2="'+x+'" y2="'+(y-26)+'" stroke="#B5870A" stroke-width="3"/><ellipse cx="'+x+'" cy="'+y+'" rx="26" ry="30" fill="#E53935"/><rect x="'+(x-26)+'" y="'+(y-6)+'" width="52" height="12" fill="#C62828"/><rect x="'+(x-6)+'" y="'+(y+28)+'" width="12" height="14" fill="#FFD54A"/>'; } return artWrap(l, '#FFE0E0'); },
+  fireworks(){ var f=''; var c=['#FFD54A','#FF8A65','#FF9DB0','#7FC8EF']; for(var k=0;k<4;k++){ var cx=70+k*60,cy=50+(k%2)*30; for(var i=0;i<8;i++){ var a=i*Math.PI/4; f+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+Math.cos(a)*18)+'" y2="'+(cy+Math.sin(a)*18)+'" stroke="'+c[k]+'" stroke-width="3" stroke-linecap="round"/>'; } } return artWrap(f, '#2E2A4A'); },
+  reunion(){ return artWrap('<rect x="60" y="110" width="200" height="14" rx="6" fill="#E0A04A"/><ellipse cx="160" cy="108" rx="70" ry="14" fill="#F4C97A"/><circle cx="110" cy="80" r="18" fill="#FFCCBC"/><circle cx="160" cy="74" r="18" fill="#FFE0B2"/><circle cx="210" cy="80" r="18" fill="#FFCCBC"/><circle cx="140" cy="98" r="10" fill="#fff"/><circle cx="180" cy="98" r="10" fill="#fff"/>', '#FFF1E0'); },
+  moon(){ var s=''; for(var i=0;i<7;i++){ s+='<text x="'+(20+i*42)+'" y="'+(36+(i%2)*30)+'" font-size="14" fill="#FFE9A8">鈽?/text>'; } return artWrap(s+'<circle cx="220" cy="80" r="40" fill="#FFF3C4"/><circle cx="205" cy="70" r="6" fill="#EAD79A"/><circle cx="232" cy="92" r="5" fill="#EAD79A"/>', '#1E2A52'); },
+  mooncake(){ return artWrap('<ellipse cx="160" cy="150" rx="110" ry="18" fill="#E8D3A8"/><circle cx="160" cy="100" r="46" fill="#D9A441" stroke="#B5870A" stroke-width="4"/><rect x="140" y="80" width="40" height="40" rx="6" fill="none" stroke="#B5870A" stroke-width="3"/><text x="160" y="107" font-size="20" text-anchor="middle" fill="#7A5A00">涓</text>', '#FFF7E9'); },
+  race(){ return artWrap('<path d="M0 140 H320 V180 H0Z" fill="#AED581"/><g transform="translate(70,96)"><ellipse cx="0" cy="22" rx="26" ry="16" fill="#8D6E63"/><circle cx="22" cy="8" r="12" fill="#A1887F"/></g><g transform="translate(210,90)"><ellipse cx="0" cy="26" rx="20" ry="24" fill="#FFFFFF"/><ellipse cx="-6" cy="2" rx="6" ry="12" fill="#FFFFFF"/><ellipse cx="8" cy="2" rx="6" ry="12" fill="#FFFFFF"/><circle cx="0" cy="20" r="3" fill="#5A4A3F"/></g><text x="270" y="60" font-size="22">馃弫</text>', '#EAF6FF'); },
+  crow(){ return artWrap('<rect x="150" y="80" width="46" height="70" rx="10" fill="#9CC6E0" opacity=".6"/><rect x="150" y="120" width="46" height="30" rx="6" fill="#5AA0C8" opacity=".7"/><ellipse cx="110" cy="90" rx="26" ry="20" fill="#37474F"/><circle cx="92" cy="84" r="14" fill="#37474F"/><polygon points="78,84 64,88 78,94" fill="#FFB300"/><circle cx="90" cy="82" r="3" fill="#fff"/>', '#E3F6FF'); },
+  sheep(){ return artWrap('<path d="M0 140 H320 V180 H0Z" fill="#AED581"/><ellipse cx="160" cy="104" rx="44" ry="34" fill="#FFFFFF"/><circle cx="120" cy="100" r="16" fill="#5A4A3F"/><circle cx="116" cy="96" r="3" fill="#fff"/><rect x="140" y="134" width="6" height="18" fill="#5A4A3F"/><rect x="176" y="134" width="6" height="18" fill="#5A4A3F"/>', '#E3F6FF'); },
+  wolf(){ return artWrap('<path d="M0 140 H320 V180 H0Z" fill="#9AAF6E"/><ellipse cx="160" cy="108" rx="40" ry="28" fill="#78909C"/><polygon points="128,84 120,64 142,84" fill="#78909C"/><polygon points="192,84 200,64 178,84" fill="#78909C"/><circle cx="146" cy="104" r="4" fill="#263238"/><circle cx="174" cy="104" r="4" fill="#263238"/><polygon points="150,122 170,122 160,134" fill="#37474F"/>', '#D7E0C4'); },
+  fence(){ return artWrap('<path d="M0 140 H320 V180 H0Z" fill="#AED581"/><g fill="#C49A6C">'+'<rect x="60" y="96" width="10" height="56"/><rect x="110" y="96" width="10" height="56"/><rect x="160" y="96" width="10" height="56"/><rect x="210" y="96" width="10" height="56"/><rect x="260" y="96" width="10" height="56"/><rect x="56" y="108" width="218" height="9"/><rect x="56" y="130" width="218" height="9"/></g><ellipse cx="160" cy="150" rx="22" ry="14" fill="#fff"/>', '#E3F6FF'); },
+  sheepHappy(){ return artWrap('<path d="M0 140 H320 V180 H0Z" fill="#AED581"/><circle cx="58" cy="44" r="20" fill="#FFD54A"/><ellipse cx="120" cy="120" rx="30" ry="22" fill="#fff"/><ellipse cx="200" cy="118" rx="30" ry="22" fill="#fff"/><circle cx="100" cy="116" r="10" fill="#5A4A3F"/><circle cx="180" cy="114" r="10" fill="#5A4A3F"/>', '#E3F6FF'); },
+  egg(){ return artWrap('<ellipse cx="160" cy="92" rx="62" ry="78" fill="#5B4E7A"/><path d="M120 60 Q160 40 200 70 Q160 92 120 60Z" fill="#7E6FA8"/><path d="M120 120 Q160 100 200 128 Q160 150 120 120Z" fill="#473C63"/><circle cx="150" cy="86" r="4" fill="#FFE9A8"/><circle cx="180" cy="100" r="3" fill="#FFE9A8"/>', '#2E2A4A'); },
+  pangu(){ return artWrap('<rect x="0" y="0" width="320" height="78" fill="#BFE9FF"/><rect x="0" y="102" width="320" height="78" fill="#C49A6C"/><g transform="translate(160,90)"><rect x="-7" y="-30" width="14" height="60" rx="6" fill="#8D6E63"/><circle cx="0" cy="-40" r="14" fill="#A1887F"/><rect x="-34" y="-26" width="20" height="8" rx="4" fill="#8D6E63" transform="rotate(-40 -24 -22)"/><rect x="14" y="-26" width="20" height="8" rx="4" fill="#8D6E63" transform="rotate(40 24 -22)"/></g>', '#EAF6FF'); },
+  world(){ return artWrap('<rect x="0" y="0" width="320" height="84" fill="#BFE9FF"/><circle cx="60" cy="40" r="18" fill="#FFD54A"/><rect x="0" y="108" width="320" height="72" fill="#AED581"/><path d="M0 108 Q80 86 160 108 Q240 86 320 108 L320 120 L0 120Z" fill="#9BD976"/><ellipse cx="220" cy="60" rx="26" ry="10" fill="#fff" opacity=".8"/>', '#EAF6FF'); },
+  frog(){ return artWrap('<rect x="60" y="60" width="200" height="120" rx="14" fill="#7A5A3A"/><rect x="74" y="74" width="172" height="106" rx="10" fill="#3A2E22"/><circle cx="160" cy="56" r="30" fill="#9CCC65"/><circle cx="146" cy="44" r="11" fill="#fff"/><circle cx="174" cy="44" r="11" fill="#fff"/><circle cx="146" cy="46" r="5" fill="#33691E"/><circle cx="174" cy="46" r="5" fill="#33691E"/><ellipse cx="160" cy="70" rx="22" ry="14" fill="#9CCC65"/><path d="M150 72 Q160 80 170 72" stroke="#33691E" stroke-width="2.5" fill="none" stroke-linecap="round"/>', '#BFE9FF'); },
+};
+
+/* story page (paragraph): {art, zh, en};  key sentence: L(...) */
+function P(art, zh, en){ return {art, zh, en}; }
+const STORY_CATS = [
+  { key:"festival", emoji:"馃彯", zh:"浼犵粺鑺傛棩", en:"Festivals", stories:[
+    { id:"chunjie", zh:"鏄ヨ妭", en:"Spring Festival", level:2,
+      paras:[
+        P("lantern","鏄ヨ妭鏄腑鍥芥渶閲嶈銆佹渶鐑椆鐨勪紶缁熻妭鏃ワ紝涔熷氨鏄啘鍘嗘柊骞淬€備紶璇村彜鏃跺€欐湁涓€鍙彨鈥滃勾鈥濈殑鎬吔锛屾瘡鍒板勾鏈氨鍑烘潵鍚撲汉銆?,
+          "Spring Festival is China's most important and liveliest traditional holiday 鈥?the Lunar New Year. Legend says that long ago a monster called \u201cNian\u201d came out at the end of each year to frighten people."),
+        P("fireworks","鍚庢潵浜轰滑鍙戠幇锛屸€滃勾鈥濇渶鎬曠孩鑹插拰鍝嶅０銆備簬鏄ぇ瀹惰创涓婄孩绾㈢殑鏄ヨ仈锛屾斁璧烽灜鐐紝鎸傝捣鐏锛岀粓浜庢妸鈥滃勾鈥濊刀璺戜簡銆?,
+          "Later, people discovered that Nian feared the color red and loud noises. So everyone put up red couplets, set off firecrackers, and hung lanterns 鈥?and at last they drove Nian away."),
+        P("reunion","浠庢姣忓埌鏄ヨ妭锛屼竴瀹朵汉灏卞洟鑱氬湪涓€璧峰悆鍥㈠渾楗紝闀胯緢缁欏瀛愬帇宀侀挶銆傚ぇ瀹朵簰鐩告嫓骞达紝绁濈鏂扮殑涓€骞村钩骞冲畨瀹夈€佸揩蹇箰涔愩€?,
+          "Ever since, at Spring Festival the whole family gathers for a reunion dinner, and elders give children lucky money. People greet one another, wishing each other a safe and happy new year.")
+      ],
+      keys:[ {s:L(["浠?,"澶?,"鏄?,"鏄?,"鑺?],["j墨n","ti膩n","sh矛","ch奴n","ji茅"]), en:"Today is Spring Festival."},
+             {s:L(["鎴?,"浠?,"涓€","瀹?,"浜?,"鍦?,"涓€","璧?],["w菕","men","y矛","ji膩","r茅n","z脿i","y矛","q菒"]), en:"Our whole family is together."},
+             {s:L(["澶?,"瀹?,"涓€","璧?,"鍚?,"鍥?,"鍦?,"楗?],["d脿","ji膩","y矛","q菒","ch墨","tu谩n","yu谩n","f脿n"]), en:"Everyone eats the reunion dinner together."},
+             {s:L(["浜?,"鐩?,"璇?,"鏂?,"骞?,"蹇?,"涔?],["h霉","xi膩ng","shu艒","x墨n","ni谩n","ku脿i","l猫"]), en:"We wish each other a happy new year."} ],
+      moral:"鏄ヨ妭鏄洟鍦嗗拰绁濈鐨勮妭鏃ャ€?/ Spring Festival is a time of reunion and good wishes." },
+
+    { id:"zhongqiu", zh:"涓鑺?, en:"Mid-Autumn Festival", level:2,
+      paras:[
+        P("moon","涓鑺傚湪鍐滃巻鍏湀鍗佷簲锛岃繖涓€澶╃殑鏈堜寒鍙堝ぇ鍙堝渾銆傚彜浜鸿寰楀渾鍦嗙殑鏈堜寒浠ｈ〃鍥㈠渾锛屾墍浠ヤ腑绉嬭妭鍙堝彨鈥滃洟鍦嗚妭鈥濄€?,
+          "The Mid-Autumn Festival falls on the 15th day of the 8th lunar month, when the moon is big and round. People of old felt the round moon stood for reunion, so it is also called the \u201cReunion Festival.\u201d"),
+        P("mooncake","浜轰滑浼犺鏈堜寒涓婁綇鐫€缇庝附鐨勫濞ャ€傝繖涓€澶╋紝澶у涓€杈瑰悆棣欑敎鐨勬湀楗硷紝涓€杈规姮澶磋祻鏈堬紝鎬濆康杩滄柟鐨勪翰浜恒€?,
+          "Legend says the beautiful goddess Chang'e lives on the moon. On this day people eat sweet mooncakes while gazing up at the moon, missing family who are far away."),
+        P("reunion","涓嶇绂诲澶氳繙锛屼汉浠兘甯屾湜涓鑳藉洖瀹讹紝鍜屽浜哄潗鍦ㄤ竴璧凤紝鐪嬬潃鍚屼竴杞槑鏈堬紝璇磋绗戠瑧锛屼韩鍙楀洟鍦嗙殑蹇箰銆?,
+          "No matter how far from home, people hope to return for Mid-Autumn, to sit together under the same bright moon, laughing and talking, enjoying the happiness of being reunited.")
+      ],
+      keys:[ {s:L(["浠?,"澶?,"鏄?,"涓?,"绉?,"鑺?],["j墨n","ti膩n","sh矛","zh艒ng","qi奴","ji茅"]), en:"Today is the Mid-Autumn Festival."},
+             {s:L(["鏈?,"浜?,"鍙?,"澶?,"鍙?,"鍦?],["yu猫","liang","y貌u","d脿","y貌u","yu谩n"]), en:"The moon is big and round."},
+             {s:L(["鎴?,"浠?,"涓€","璧?,"鍚?,"鏈?,"楗?],["w菕","men","y矛","q菒","ch墨","yu猫","bing"]), en:"We eat mooncakes together."},
+             {s:L(["鍏?,"瀹?,"浜?,"涓€","璧?,"璧?,"鏈?],["qu谩n","ji膩","r茅n","y矛","q菒","sh菐ng","yu猫"]), en:"The whole family watches the moon together."} ],
+      moral:"涓鑺傚瘎鎵樼潃瀵瑰浜虹殑鎬濆康銆?/ Mid-Autumn carries our longing for family." },
+
+    { id:"duanwu", zh:"绔崍鑺?, en:"Dragon Boat Festival", level:2,
+      paras:[
+        P("fireworks","绔崍鑺傚湪鍐滃巻浜旀湀鍒濅簲銆備袱鍗冨骞村墠锛屾湁涓€浣嶇埍鍥界殑璇椾汉鍙眻鍘熴€備粬涓€蹇冩兂璁╁浗瀹跺彉濂斤紝鍙槸娌℃湁浜哄惉浠栫殑璇濓紝浠栭潪甯镐激蹇冿紝鏈€鍚庤烦杩涙睙閲屻€?,
+          "The Dragon Boat Festival falls on the 5th day of the 5th lunar month. Over two thousand years ago there lived a patriotic poet named Qu Yuan. He longed for his country to prosper, but no one listened to him; heartbroken, he leapt into a river."),
+        P("reunion","鑰佺櫨濮撳緢鐖辨埓灞堝師锛屾€ュ繖鍒掕埞鍘绘晳浠栵紝杩樻妸绫冲洟鎵旇繘姹熼噷锛屽厤寰楅奔鍎夸激瀹充粬鐨勮韩浣撱€傝繖灏辨槸璧涢緳鑸熷拰鍚冪步瀛愮殑鐢辨潵銆?,
+          "The people loved Qu Yuan dearly. They rowed out in boats to save him and threw rice dumplings into the river so the fish would not harm his body. This is the origin of dragon-boat races and eating zongzi."),
+        P("reunion","浠婂ぉ姣忓埌绔崍鑺傦紝浜轰滑杩樹細璧涢緳鑸熴€佸悆绮藉瓙銆佹寕鑹捐崏锛岀邯蹇佃繖浣嶄紵澶х殑璇椾汉锛屼篃绁濈瀹朵汉骞冲畨鍋ュ悍銆?,
+          "Today, at the Dragon Boat Festival people still race dragon boats, eat zongzi, and hang mugwort to honor this great poet and to wish their families peace and health.")
+      ],
+      keys:[ {s:L(["浠?,"澶?,"鏄?,"绔?,"鍗?,"鑺?],["j墨n","ti膩n","sh矛","du膩n","w菙","ji茅"]), en:"Today is the Dragon Boat Festival."},
+             {s:L(["鎴?,"浠?,"涓€","璧?,"鍚?,"绮?,"瀛?],["w菕","men","y矛","q菒","ch墨","z貌ng","zi"]), en:"We eat zongzi together."},
+             {s:L(["澶?,"瀹?,"鍘?,"鐪?,"璧?,"榫?,"鑸?],["d脿","ji膩","q霉","k脿n","s脿i","l贸ng","zh艒u"]), en:"Everyone goes to watch the dragon-boat race."},
+             {s:L(["绔?,"鍗?,"鑺?,"绾?,"蹇?,"灞?,"鍘?],["du膩n","w菙","ji茅","j矛","ni脿n","q奴","yu谩n"]), en:"The festival honors the poet Qu Yuan."} ],
+      moral:"绔崍鑺傜邯蹇电埍鍥借瘲浜哄眻鍘熴€?/ The Dragon Boat Festival honors the patriotic poet Qu Yuan." },
+    { id:"yuanxiao", zh:"鍏冨鑺?, en:"Lantern Festival", level:2,
+      paras:[
+        P("lantern","鍏冨鑺傚湪鍐滃巻姝ｆ湀鍗佷簲锛屾槸鏄ヨ妭涔嬪悗鐨勭涓€涓噸瑕佽妭鏃ワ紝涔熸槸涓€骞翠腑绗竴涓湀鍦嗙殑澶滄櫄銆?,"The Lantern Festival falls on the 15th day of the first lunar month 鈥?the first important holiday after Spring Festival and the year's first full moon."),
+        P("lantern","杩欎竴澶╂櫄涓婏紝鍒板鎸傛弧浜嗙孩绾㈢殑鐏锛屼簲棰滃叚鑹诧紝浜爞鍫傜殑銆傚ぇ浜哄皬瀛╂彁鐫€鑺辩伅鍑洪棬锛岀儹闂规瀬浜嗐€?,"On this night red lanterns hang everywhere, colorful and bright. Grown-ups and children carry lanterns outside 鈥?a most lively scene."),
+        P("reunion","浜轰滑杩樹細涓€璧峰悆姹ゅ渾銆傚渾鍦嗙殑姹ゅ渾鍙堥鍙堢敎锛岃薄寰佺潃涓€瀹朵汉鍥㈠洟鍦嗗渾銆佺敎鐢滆湝铚溿€?,"People eat tangyuan together. The round, sweet dumplings stand for family reunion and a sweet life.")
+      ],
+      keys:[ {s:L(["鍏?,"瀹?,"鐪?,"鑺?,"鐏?],["yu谩n","xi膩o","k脿n","hu膩","d膿ng"]), en:"At the Lantern Festival we look at lanterns."},
+             {s:L(["鏈?,"浜?,"鍦?,"鍦?,"鐨?],["yu猫","liang","yu谩n","yu谩n","de"]), en:"The moon is round."},
+             {s:L(["鎴?,"浠?,"鍚?,"姹?,"鍦?],["w菕","men","ch墨","t膩ng","yu谩n"]), en:"We eat sweet rice balls."} ],
+      moral:"鍏冨鑺傝祻鐏悆姹ゅ渾锛屽洟鍥㈠渾鍦嗐€?/ At the Lantern Festival we enjoy lanterns and tangyuan, together as one." }
+  ]},
+
+  { key:"jieqi", emoji:"馃尡", zh:"浜屽崄鍥涜妭姘?, en:"24 Solar Terms", stories:[
+    { id:"lichun", zh:"绔嬫槬", en:"Start of Spring", level:2,
+      paras:[
+        P("spring","绔嬫槬鏄簩鍗佸洓鑺傛皵閲岀殑绗竴涓紝涓€鑸湪浜屾湀鍒濄€傗€滅珛鈥濇槸寮€濮嬬殑鎰忔€濓紝绔嬫槬灏辫〃绀烘槬澶╂潵浜嗐€?,"Lichun is the first of the 24 solar terms, usually in early February. 鈥淟i鈥?means 鈥渂egin,鈥?so Lichun marks the arrival of spring."),
+        P("spring","杩欎竴澶╋紝澶槼鎱㈡參鍙樻殩锛岀櫧澶╀竴澶╂瘮涓€澶╅暱锛屽ぇ鍦颁粠鍐ぉ鐨勬矇鐫′腑鎱㈡參鑻忛啋銆?,"On this day the sun grows warmer and the days lengthen, as the land slowly wakes from its winter sleep."),
+        P("spring","鍦ㄥ緢澶氬湴鏂癸紝浜轰滑浼氬湪绔嬫槬鈥滃挰鏄モ€濓紝鍚冩槬楗煎拰钀濆崪锛岃繋鎺ユ槬澶╋紝鐩兼湜鏂板勾韬綋鍋ュ悍銆?,"In many places people 鈥渂ite the spring,鈥?eating spring pancakes and radishes to welcome the season and wish for good health.")
+      ],
+      keys:[ {s:L(["鏄?,"澶?,"鏉?,"浜?],["ch奴n","ti膩n","l谩i","le"]), en:"Spring has come."},
+             {s:L(["澶?,"姘?,"鍙?,"鏆?,"浜?],["ti膩n","q矛","bi脿n","nu菐n","le"]), en:"The weather is turning warm."},
+             {s:L(["鎴?,"浠?,"鍚?,"鏄?,"楗?],["w菕","men","ch墨","ch奴n","b菒ng"]), en:"We eat spring pancakes."} ],
+      moral:"绔嬫槬鏄竴骞寸殑寮€濮嬶紝鍏呮弧甯屾湜銆?/ Lichun begins the year, full of hope." },
+    { id:"yushui", zh:"闆ㄦ按", en:"Rain Water", level:2,
+      paras:[
+        P("spring","闆ㄦ按涓€鑸湪浜屾湀涓棳銆傝繖鏃跺€欙紝澶╂皵鍥炴殩锛岄洩娓愭笎灏戜簡锛岄洦娓愭笎澶氫簡锛屾墍浠ュ彨鈥滈洦姘粹€濄€?,"Yushui falls in mid-February. The weather warms, snow grows scarce and rain grows frequent 鈥?hence the name 鈥淩ain Water.鈥?),
+        P("spring","鏄ラ洦杞昏交鍦拌惤涓嬫潵锛屾粙娑︾潃澶у湴銆傚皬鑽夊拰搴勭鍠濊冻浜嗘按锛岄暱寰楁洿缁挎洿澹簡銆?,"Gentle spring rain falls, nourishing the land. Grass and crops drink their fill and grow greener and stronger."),
+        P("spring","鍐滄皯璇粹€滄槬闆ㄨ吹濡傛补鈥濓紝鍥犱负杩欐椂鍊欑殑闆ㄦ按瀵规槬澶╃殑搴勭鐗瑰埆閲嶈銆?,"Farmers say 鈥渟pring rain is as precious as oil,鈥?for it is vital to the spring crops.")
+      ],
+      keys:[ {s:L(["鏄?,"闆?,"涓?,"鏉?,"浜?],["ch奴n","y菙","xi脿","l谩i","le"]), en:"The spring rain is falling."},
+             {s:L(["闆?,"瓒?,"鏉?,"瓒?,"灏?],["xu臎","yu猫","l谩i","yu猫","sh菐o"]), en:"There is less and less snow."},
+             {s:L(["灏?,"鑽?,"鍠?,"楗?,"姘?],["xi菐o","c菐o","h膿","b菐o","shu菒"]), en:"The grass drinks its fill of water."} ],
+      moral:"闆ㄦ按婊嬫鼎澶у湴锛屼竾鐗╃敓闀裤€?/ Rain Water nourishes the land and all things grow." },
+    { id:"jingzhe", zh:"鎯婅洶", en:"Awakening of Insects", level:2,
+      paras:[
+        P("spring","鎯婅洶涓€鑸湪涓夋湀鍒濄€傗€滆洶鈥濇槸鎸囪翰璧锋潵鐫¤鐨勫皬铏瓙锛屸€滄儕鈥濆氨鏄儕閱掋€?,"Jingzhe falls in early March. 鈥淶he鈥?means insects hiding in winter sleep, and 鈥渏ing鈥?means to startle them awake."),
+        P("spring","澶╀笂鍝嶈捣鏄ラ浄锛岃桨闅嗛殕鍦帮紝鎶婅棌鍦ㄥ湡閲屽啲鐪犵殑灏忓姩鐗╅兘鎯婇啋浜嗐€?,"Spring thunder rumbles across the sky, waking the small creatures that hibernated in the soil."),
+        P("spring","鎯婅洶涓€鍒帮紝鏄ヨ€曞氨寮€濮嬩簡銆傚啘姘戝繖鐫€涓嬪湴锛屾挱涓嬫柊涓€骞寸殑绉嶅瓙銆?,"Once Jingzhe arrives, spring plowing begins. Farmers head to the fields to sow the seeds of the new year.")
+      ],
+      keys:[ {s:L(["鏄?,"闆?,"鍝?,"浜?],["ch奴n","l茅i","xi菐ng","le"]), en:"The spring thunder rumbles."},
+             {s:L(["灏?,"铏?,"閱?,"鏉?,"浜?],["xi菐o","ch贸ng","x菒ng","l谩i","le"]), en:"The little insects wake up."},
+             {s:L(["鍐?,"姘?,"寮€","濮?,"绉?,"鍦?],["n贸ng","m铆n","k膩i","sh菒","zh貌ng","d矛"]), en:"Farmers start to plant."} ],
+      moral:"鎯婅洶鏄ラ浄鍝嶏紝涓囩墿閮借嫃閱掋€?/ At Jingzhe the thunder wakes all living things." },
+    { id:"chunfen", zh:"鏄ュ垎", en:"Spring Equinox", level:2,
+      paras:[
+        P("spring","鏄ュ垎涓€鑸湪涓夋湀涓嬫棳銆傝繖涓€澶╁緢鐗瑰埆锛岀櫧澶╁拰榛戝涓€鏍烽暱锛屾濂芥妸鏄ュぉ鍒嗘垚涓ゅ崐銆?,"Chunfen falls in late March. On this special day, day and night are equally long, dividing spring neatly in two."),
+        P("spring","鏄ュ垎浠ュ悗锛岀櫧澶╄秺鏉ヨ秺闀匡紝澶╂皵瓒婃潵瓒婃殩銆傜嚂瀛愰鍥炴潵浜嗭紝鑺卞効涔熼兘寮€浜嗐€?,"After Chunfen the days grow longer and warmer. The swallows return and the flowers bloom."),
+        P("spring","姘戦棿鏈夆€滄槬鍒嗙珫铔嬧€濈殑娓告垙锛屼汉浠妸楦¤泲灏忓績鍦扮珛鍦ㄦ涓婏紝杩庢帴鏄ュぉ銆?,"There is a folk game of 鈥渟tanding an egg鈥?at Chunfen: people balance an egg upright on the table to welcome spring.")
+      ],
+      keys:[ {s:L(["鏄?,"澶?,"涓€","鏍?,"闀?],["zh貌u","y猫","y铆","y脿ng","ch谩ng"]), en:"Day and night are equal."},
+             {s:L(["鐕?,"瀛?,"椋?,"鍥?,"鏉?],["y脿n","zi","f膿i","hu铆","l谩i"]), en:"The swallows fly back."},
+             {s:L(["鑺?,"鍎?,"閮?,"寮€","浜?],["hu膩","茅r","d艒u","k膩i","le"]), en:"The flowers have all bloomed."} ],
+      moral:"鏄ュ垎鏄煎骞冲垎锛屾槬鑹叉濂姐€?/ At Chunfen day and night are equal, and spring is at its best." },
+    { id:"qingming", zh:"娓呮槑", en:"Qingming", level:2,
+      paras:[
+        P("spring","娓呮槑涓€鑸湪鍥涙湀鍒濓紝瀹冩棦鏄妭姘旓紝涔熸槸鑺傛棩銆傝繖鏃跺€欏ぉ姘旀竻鐖斤紝鑽夋湪娓呮柊锛屾墍浠ュ彨鈥滄竻鏄庘€濄€?,"Qingming falls in early April and is both a solar term and a festival. The air is clear and the plants are fresh 鈥?hence the name 鈥淨ingming鈥?(Clear and Bright)."),
+        P("spring","娓呮槑鑺傦紝浜轰滑浼氬幓鎵锛岀粰鍘讳笘鐨勪翰浜虹尞涓婇矞鑺憋紝琛ㄨ揪鎬濆康銆?,"At Qingming, people sweep the tombs and offer flowers to departed family, expressing their longing."),
+        P("spring","娓呮槑涔熸槸韪忛潚鐨勫ソ鏃跺€欍€傚ぇ瀹惰蛋鍒伴儕澶栵紝鏀鹃绛濄€佽祻鏄ユ櫙锛屼韩鍙楁俯鏆栫殑鏄ュぉ銆?,"Qingming is also a fine time for spring outings: people go to the countryside, fly kites, and enjoy the warm spring scenery.")
+      ],
+      keys:[ {s:L(["娓?,"鏄?,"鍘?,"鎵?,"澧?],["q墨ng","m铆ng","q霉","s菐o","m霉"]), en:"At Qingming we sweep the tombs."},
+             {s:L(["鎯?,"蹇?,"浜?,"浜?],["xi菐ng","ni脿n","q墨n","r茅n"]), en:"We remember our family."},
+             {s:L(["鍑?,"鍘?,"鏀?,"椋?,"绛?],["ch奴","q霉","f脿ng","f膿ng","zheng"]), en:"We go out to fly kites."} ],
+      moral:"娓呮槑鎬濆康浜蹭汉锛屼篃浜茶繎鑷劧銆?/ Qingming honors family and embraces nature." },
+    { id:"guyu", zh:"璋烽洦", en:"Grain Rain", level:2,
+      paras:[
+        P("spring","璋烽洦涓€鑸湪鍥涙湀涓嬫棳锛屾槸鏄ュぉ鏈€鍚庝竴涓妭姘斻€傗€滆胺闆ㄢ€濆氨鏄€滈洦鐢熺櫨璋封€濈殑鎰忔€濄€?,"Guyu falls in late April and is the last solar term of spring. The name means 鈥渞ain that nourishes the hundred grains.鈥?),
+        P("spring","杩欐椂鍊欓洦姘村璧锋潵锛屾濂借鍒氱涓嬬殑璋风墿鍠濋ケ姘达紝蹇揩闀垮ぇ銆?,"Now the rains increase, giving the newly planted grains plenty of water to grow quickly."),
+        P("spring","璋烽洦鍓嶅悗锛屼汉浠噰鏂拌尪銆佺搴勭銆傚崡鏂硅繕鏈夊枬璋烽洦鑼剁殑涔犳儻锛屾嵁璇磋兘璁╀汉绮剧濂姐€?,"Around Guyu, people pick fresh tea and plant crops. In the south there is a custom of drinking Guyu tea, said to lift the spirits.")
+      ],
+      keys:[ {s:L(["涓?,"闆?,"鍏?,"搴?,"绋?],["xi脿","y菙","y菐ng","zhu膩ng","jia"]), en:"The rain nourishes the crops."},
+             {s:L(["璋?,"瀛?,"蹇?,"闀?,"澶?],["g菙","zi","ku脿i","zh菐ng","d脿"]), en:"The grain grows quickly."},
+             {s:L(["浜?,"浠?,"閲?,"鏂?,"鑼?],["r茅n","men","c菐i","x墨n","ch谩"]), en:"People pick fresh tea."} ],
+      moral:"璋烽洦闆ㄧ敓鐧捐胺锛屾槬澶╃敾涓婂彞鍙枫€?/ Guyu's rain feeds the grains and closes out spring." },
+    { id:"lixia", zh:"绔嬪", en:"Start of Summer", level:2,
+      paras:[
+        P("sun","绔嬪涓€鑸湪浜旀湀鍒濓紝琛ㄧず澶忓ぉ寮€濮嬩簡銆備粠杩欏ぉ璧凤紝澶╂皵鎱㈡參鐑捣鏉ワ紝鐧藉ぉ涔熸洿闀夸簡銆?,"Lixia falls in early May and marks the start of summer. From this day the weather warms and the days grow longer."),
+        P("sun","绔嬪鏃讹紝鐢伴噷鐨勫簞绋奸暱寰楀緢蹇紝闈掕洐鍦ㄦ睜濉橀噷鍛卞懕鍙紝鍒板涓€鐗囩敓鏈哄媰鍕冦€?,"At Lixia the crops grow fast and frogs croak in the ponds 鈥?everywhere bursts with life."),
+        P("sun","姘戦棿鏈夌珛澶忊€滅О浣撻噸鈥濈殑涔犱織锛屼汉浠О涓€绉帮紝甯屾湜澶忓ぉ韬綋鍋ュ悍锛屼笉鎬曠値鐑€?,"There is a custom of weighing oneself at Lixia, wishing for good health through the hot summer ahead.")
+      ],
+      keys:[ {s:L(["澶?,"澶?,"寮€","濮?,"浜?],["xi脿","ti膩n","k膩i","sh菒","le"]), en:"Summer has begun."},
+             {s:L(["澶?,"姘?,"鐑?,"璧?,"鏉?],["ti膩n","q矛","r猫","q菒","l谩i"]), en:"The weather is heating up."},
+             {s:L(["闈?,"铔?,"鍛?,"鍛?,"鍙?],["q墨ng","w膩","gu膩","gu膩","ji脿o"]), en:"The frogs croak."} ],
+      moral:"绔嬪涓囩墿鑼傜洓锛屽澶╂潵涓淬€?/ Lixia brings flourishing life and the start of summer." },
+    { id:"xiaoman", zh:"灏忔弧", en:"Grain Buds", level:2,
+      paras:[
+        P("harvest","灏忔弧涓€鑸湪浜旀湀涓嬫棳銆傝繖鏃跺€欙紝楹﹀瓙绛夊簞绋肩殑鏋滃疄寮€濮嬮ケ婊★紝浣嗚繕娌℃湁瀹屽叏鎴愮啛锛屾墍浠ュ彨鈥滃皬婊♀€濄€?,"Xiaoman falls in late May. The grains begin to fill out but are not yet fully ripe 鈥?hence 鈥淪mall Fullness.鈥?),
+        P("harvest","鐢伴噹閲屼竴鐗囩豢娌规补锛岄害绌楁笎娓愭矇鐢哥敻鐨勶紝棰勭ず鐫€涓版敹灏辫鍒版潵銆?,"The fields are lush and green, the wheat ears growing heavy, foretelling the harvest to come."),
+        P("harvest","鍐滄皯璇粹€滃皬婊″皬婊★紝楹︾矑娓愭弧鈥濄€傝繖鏃跺€欒濂藉ソ鐓х湅搴勭锛岀浖鏈涘ソ鏀舵垚銆?,"Farmers say 鈥渁t Xiaoman the grains gradually fill.鈥?Now they tend the crops carefully, hoping for a good harvest.")
+      ],
+      keys:[ {s:L(["楹?,"瀛?,"娓?,"娓?,"婊?],["m脿i","zi","ji脿n","ji脿n","m菐n"]), en:"The wheat slowly fills out."},
+             {s:L(["鐢?,"閲?,"缁?,"娌?,"娌?],["ti谩n","y臎","l菧","y贸u","y贸u"]), en:"The fields are lush green."},
+             {s:L(["鐩?,"鏈?,"濂?,"鏀?,"鎴?],["p脿n","w脿ng","h菐o","sh艒u","ch茅ng"]), en:"We hope for a good harvest."} ],
+      moral:"灏忔弧楹︾矑娓愭弧锛屼赴鏀跺湪鏈涖€?/ At Xiaoman the grains fill and harvest draws near." },
+    { id:"mangzhong", zh:"鑺掔", en:"Grain in Ear", level:3,
+      paras:[
+        P("harvest","鑺掔涓€鑸湪鍏湀鍒濄€傗€滆姃鈥濇寚楹﹀瓙鐨勮姃鍒猴紝杩欐椂鍊欐湁鑺掔殑楹﹀瓙瑕佹敹锛屾湁鑺掔殑绋诲瓙瑕佺锛岀壒鍒繖銆?,"Mangzhong falls in early June. 鈥淢ang鈥?refers to the awns of grain: bearded wheat must be reaped and bearded rice must be sown 鈥?a very busy time."),
+        P("harvest","鍐滄皯涓€杈瑰繖鐫€鏀跺壊閲戦粍鐨勯害瀛愶紝涓€杈瑰繖鐫€鎻掍笅缁跨豢鐨勭Ё鑻楋紝鐢伴噷鐑伀鏈濆ぉ銆?,"Farmers reap the golden wheat while planting green rice seedlings; the fields bustle with work."),
+        P("harvest","鑺掔鏄竴骞撮噷鏈€蹇欑殑鑺傛皵涔嬩竴锛屾墍浠ヤ汉浠父璇粹€滆姃绉嶅繖绉嶏紝鏍锋牱閮界鈥濄€?,"Mangzhong is one of the busiest terms of the year, so people say 鈥渁t Mangzhong, busy planting 鈥?plant everything.鈥?)
+      ],
+      keys:[ {s:L(["鏀?,"鍓?,"楹?,"瀛?],["sh艒u","g膿","m脿i","zi"]), en:"We reap the wheat."},
+             {s:L(["鎻?,"涓?,"绉?,"鑻?],["ch膩","xi脿","y膩ng","mi谩o"]), en:"We plant the rice seedlings."},
+             {s:L(["鍐?,"姘?,"寰?,"蹇?],["n贸ng","m铆n","h臎n","m谩ng"]), en:"The farmers are very busy."} ],
+      moral:"鑺掔鍙堟敹鍙堢锛屾渶鏄繖纰屻€?/ Mangzhong means reaping and sowing 鈥?the busiest of times." },
+    { id:"xiazhi", zh:"澶忚嚦", en:"Summer Solstice", level:2,
+      paras:[
+        P("sun","澶忚嚦涓€鑸湪鍏湀涓嬫棳锛屾槸涓€骞撮噷鐧藉ぉ鏈€闀裤€侀粦澶滄渶鐭殑涓€澶┿€傝繖涓€澶╁お闃冲崌寰楁渶楂樸€?,"Xiazhi falls in late June and is the day with the longest daylight and shortest night of the year. The sun climbs highest."),
+        P("sun","鍙ゆ椂鍊欙紝浜轰滑鎶婂鑷崇湅浣滈噸瑕佺殑鏃ュ瓙锛屼細鎰熻阿澶╁湴锛岀姹備赴鏀躲€傜煡浜嗕篃鍦ㄦ爲涓婁笉鍋滃湴鍙€?,"In ancient times Xiazhi was an important day for thanking heaven and earth and praying for harvest. Cicadas sing endlessly in the trees."),
+        P("sun","姘戦棿鏈夆€滃啲鑷抽ズ瀛愬鑷抽潰鈥濈殑璇存硶锛屽鑷宠繖澶╋紝寰堝鍦版柟鐨勪汉浼氬悆涓€纰楁竻鍑夌殑闈㈡潯銆?,"There is a saying, 鈥渄umplings at Winter Solstice, noodles at Summer Solstice鈥? on Xiazhi many people eat a bowl of cool noodles.")
+      ],
+      keys:[ {s:L(["鐧?,"澶?,"鏈€","闀?],["b谩i","ti膩n","zu矛","ch谩ng"]), en:"The day is the longest."},
+             {s:L(["澶?,"闃?,"鍗?,"寰?,"楂?],["t脿i","y谩ng","sh膿ng","de","g膩o"]), en:"The sun rises high."},
+             {s:L(["寰?,"澶?,"浜?,"鍚?,"闈?,"鏉?],["h臎n","du艒","r茅n","ch墨","mi脿n","ti谩o"]), en:"Many people eat noodles."} ],
+      moral:"澶忚嚦鐧藉ぉ鏈€闀匡紝鐩涘寮€濮嬨€?/ Xiazhi has the longest day, and high summer begins." },
+    { id:"xiaoshu", zh:"灏忔殤", en:"Minor Heat", level:2,
+      paras:[
+        P("sun","灏忔殤涓€鑸湪涓冩湀鍒濄€傗€滄殤鈥濆氨鏄儹鐨勬剰鎬濓紝灏忔殤琛ㄧず澶╂皵寮€濮嬪彉寰楀緢鐑紝浣嗚繕涓嶆槸鏈€鐑殑鏃跺€欍€?,"Xiaoshu falls in early July. 鈥淪hu鈥?means heat; Xiaoshu means it is getting very hot, though not yet the hottest."),
+        P("sun","灏忔殤鏃讹紝鐭ヤ簡鍙釜涓嶅仠锛岃嵎鑺卞紑婊℃睜濉樸€備汉浠埍鍦ㄦ爲鑽笅涔樺噳锛屽悆瑗跨摐瑙ｆ殤銆?,"At Xiaoshu the cicadas sing on, and lotus flowers fill the ponds. People rest in the shade and eat watermelon to cool off."),
+        P("sun","澶╂皵瓒婃潵瓒婇椃鐑紝甯稿父浼氫笅闆烽樀闆ㄣ€傚ぇ瀹惰澶氬枬姘达紝娉ㄦ剰闃叉殤銆?,"The weather grows hot and muggy, with frequent thunderstorms. People drink more water and guard against the heat.")
+      ],
+      keys:[ {s:L(["澶?,"姘?,"寰?,"鐑?],["ti膩n","q矛","h臎n","r猫"]), en:"The weather is very hot."},
+             {s:L(["鑽?,"鑺?,"寮€","浜?],["h茅","hu膩","k膩i","le"]), en:"The lotus flowers bloom."},
+             {s:L(["鍚?,"瑗?,"鐡?,"瑙?,"鏆?],["ch墨","x墨","gu膩","ji臎","sh菙"]), en:"We eat watermelon to cool down."} ],
+      moral:"灏忔殤澶╂皵娓愮儹锛屾敞鎰忎箻鍑夈€?/ Xiaoshu turns hot 鈥?stay cool." },
+    { id:"dashu", zh:"澶ф殤", en:"Major Heat", level:2,
+      paras:[
+        P("sun","澶ф殤涓€鑸湪涓冩湀涓嬫棳锛屾槸涓€骞撮噷鏈€鐑殑鑺傛皵銆傚お闃崇伀杈ｈ荆鐨勶紝鍦伴潰鏅掑緱鍙戠儷銆?,"Dashu falls in late July and is the hottest solar term of the year. The sun blazes and the ground turns scorching."),
+        P("sun","澶ф殤鏃讹紝搴勭闀垮緱鏈€蹇紝浣嗕汉鍜屽姩鐗╅兘鎬曡繖涔堢儹鐨勫ぉ姘旓紝瑕佸ソ濂介伩鏆戙€?,"At Dashu the crops grow fastest, yet people and animals fear such heat and must shelter from it."),
+        P("sun","姘戦棿鏈夊枬浼忚尪銆佸悆鍑夐鐨勪範鎯€備竴纰楃豢璞嗘堡锛屽張瑙ｆ复鍙堟秷鏆戯紝鐗瑰埆鑸掓湇銆?,"There are customs of drinking summer tea and eating cool foods. A bowl of mung-bean soup quenches thirst and beats the heat.")
+      ],
+      keys:[ {s:L(["澶?,"姘?,"鏈€","鐑?],["ti膩n","q矛","zu矛","r猫"]), en:"The weather is the hottest."},
+             {s:L(["澶?,"闃?,"鐏?,"杈?,"杈?],["t脿i","y谩ng","hu菕","l脿","l脿"]), en:"The sun is blazing."},
+             {s:L(["鍠?,"缁?,"璞?,"姹?],["h膿","l菧","d貌u","t膩ng"]), en:"We drink mung-bean soup."} ],
+      moral:"澶ф殤鏈€鐑殑鏃ュ瓙锛屾敞鎰忛槻鏆戙€?/ Dashu is the hottest time 鈥?beware the heat." },
+    { id:"liqiu", zh:"绔嬬", en:"Start of Autumn", level:2,
+      paras:[
+        P("harvest","绔嬬涓€鑸湪鍏湀鍒濓紝琛ㄧず绉嬪ぉ寮€濮嬩簡銆傝櫧鐒跺ぉ姘旇繕寰堢儹锛屼絾鏃╂櫄宸茬粡鏈変簡涓€涓濆噳鎰忋€?,"Liqiu falls in early August and marks the start of autumn. Though still hot, mornings and evenings now carry a hint of coolness."),
+        P("harvest","绔嬬浠ュ悗锛屾爲鍙舵參鎱㈠紑濮嬪彉榛勶紝椋庨噷涔熷甫鏉ヤ簡绉嬪ぉ鐨勫懗閬撱€?,"After Liqiu the leaves slowly begin to yellow, and the wind carries the scent of autumn."),
+        P("harvest","姘戦棿鏈夆€滆创绉嬭啒鈥濈殑璇存硶锛屽澶╀汉瀹规槗鐦︼紝绔嬬鍚庡悆鐐瑰ソ鐨勶紝琛ヤ竴琛ヨ韩浣撱€?,"There is a custom of 鈥減utting on autumn fat鈥? after a thinning summer, people eat heartier food to restore their strength.")
+      ],
+      keys:[ {s:L(["绉?,"澶?,"寮€","濮?,"浜?],["qi奴","ti膩n","k膩i","sh菒","le"]), en:"Autumn has begun."},
+             {s:L(["鏃?,"鏅?,"鏈?,"鐐?,"鍑?],["z菐o","w菐n","y菕u","di菐n","li谩ng"]), en:"Mornings and evenings turn cool."},
+             {s:L(["鏍?,"鍙?,"鎱?,"鎱?,"榛?],["sh霉","y猫","m脿n","m脿n","hu谩ng"]), en:"The leaves slowly turn yellow."} ],
+      moral:"绔嬬鏆戝幓鍑夋潵锛岀澶╂潵涓淬€?/ Liqiu sends off the heat and welcomes autumn." },
+    { id:"chushu", zh:"澶勬殤", en:"End of Heat", level:2,
+      paras:[
+        P("harvest","澶勬殤涓€鑸湪鍏湀涓嬫棳銆傗€滃鈥濇槸缁撴潫銆佽翰钘忕殑鎰忔€濓紝澶勬殤琛ㄧず鐐庣儹鐨勫澶╁氨瑕佽繃鍘讳簡銆?,"Chushu falls in late August. 鈥淐hu鈥?means to end or retreat; Chushu means the scorching summer is drawing to a close."),
+        P("harvest","澶勬殤浠ュ悗锛屽ぉ姘斾竴澶╁ぉ鍑夌埥锛屾棭鏅氱殑椋庝篃鑸掓湇浜嗐€傚ぉ绌哄張楂樺張钃濓紝甯稿父椋樼潃鐧戒簯銆?,"After Chushu the weather cools day by day, and the morning and evening breezes feel pleasant. The sky is high and blue with drifting white clouds."),
+        P("harvest","杩欐椂鍊欙紝鐢伴噷鐨勫簞绋煎揩瑕佹垚鐔燂紝鍐滄皯寮€濮嬩负绉嬪ぉ鐨勬敹鑾峰仛鍑嗗銆?,"Now the crops are nearly ripe, and farmers begin preparing for the autumn harvest.")
+      ],
+      keys:[ {s:L(["澶?,"澶?,"蹇?,"杩?,"鍘?],["xi脿","ti膩n","ku脿i","gu貌","q霉"]), en:"Summer is nearly over."},
+             {s:L(["澶?,"姘?,"鍑?,"鐖?,"浜?],["ti膩n","q矛","li谩ng","shu菐ng","le"]), en:"The weather has turned cool."},
+             {s:L(["澶?,"楂?,"浜?,"鍙?,"鐧?],["ti膩n","g膩o","y煤n","y貌u","b谩i"]), en:"The sky is high and the clouds white."} ],
+      moral:"澶勬殤鏆戞皵娓愭秷锛屽噳鐖藉疁浜恒€?/ Chushu lets the heat fade into pleasant cool." },
+    { id:"bailu", zh:"鐧介湶", en:"White Dew", level:3,
+      paras:[
+        P("harvest","鐧介湶涓€鑸湪涔濇湀鍒濄€傚ぉ姘斿彉鍑夛紝澶滈噷鐨勬按姹藉湪鑽夊彾涓婂彉鎴愪竴棰楅鐧界櫧鐨勯湶鐝狅紝鎵€浠ュ彨鈥滅櫧闇测€濄€?,"Bailu falls in early September. As it cools, night moisture forms tiny white dewdrops on the leaves 鈥?hence 鈥淲hite Dew.鈥?),
+        P("harvest","鐧介湶鏃讹紝澶╂皵鏄庢樉鍑変簡锛屾棭鏅氳澶氱┛涓€浠惰。鏈嶃€傚ぇ闆佷篃寮€濮嬪線鍗楁柟椋炰簡銆?,"At Bailu the air turns noticeably cool; one needs an extra layer morning and night. The wild geese begin flying south."),
+        P("harvest","姘戦棿鏈夆€滅櫧闇茬櫧鑼尗锛岃胺瀛愭弧鐢伴粍鈥濈殑璇存硶锛岃繖姝ｆ槸绋昏胺鎴愮啛銆佸噯澶囦赴鏀剁殑鏃跺€欍€?,"A folk saying goes, 鈥渁t White Dew the mist lies white and the fields turn golden鈥?鈥?the rice ripens, ready for harvest.")
+      ],
+      keys:[ {s:L(["鑽?,"涓?,"鏈?,"闇?,"鐝?],["c菐o","sh脿ng","y菕u","l霉","zh奴"]), en:"There is dew on the grass."},
+             {s:L(["澶?,"姘?,"鍑?,"浜?],["ti膩n","q矛","li谩ng","le"]), en:"The weather has turned cool."},
+             {s:L(["澶?,"闆?,"寰€","鍗?,"椋?],["d脿","y脿n","w菐ng","n谩n","f膿i"]), en:"The wild geese fly south."} ],
+      moral:"鐧介湶闇叉按鏅惰幑锛岀鎰忔笎娴撱€?/ White Dew brings glistening dew and deepening autumn." },
+    { id:"qiufen", zh:"绉嬪垎", en:"Autumn Equinox", level:2,
+      paras:[
+        P("harvest","绉嬪垎涓€鑸湪涔濇湀涓嬫棳銆傝繖涓€澶╁緢鐗瑰埆锛岀櫧澶╁拰榛戝涓€鏍烽暱銆傝繃浜嗙鍒嗭紝鐧藉ぉ灏辫秺鏉ヨ秺鐭簡銆?,"Qiufen falls in late September. On this special day, day and night are equally long; after it, the days grow shorter."),
+        P("harvest","绉嬪垎鏄赴鏀剁殑瀛ｈ妭銆傜敯閲庨噷閲戦粍鐨勭ɑ瀛愮啛浜嗭紝鏋滃洯閲屾寕婊′簡娌夌敻鐢哥殑鏋滃疄銆?,"Qiufen is the harvest season: golden rice ripens in the fields and heavy fruit hangs in the orchards."),
+        P("harvest","鐜板湪锛岀鍒嗚繕琚畾涓衡€滀腑鍥藉啘姘戜赴鏀惰妭鈥濓紝浜轰滑鎰熻阿澶ц嚜鐒讹紝涔熸劅璋㈠啘姘戠殑杈涘嫟鍔冲姩銆?,"Today Qiufen is also 鈥淐hina's Farmers' Harvest Festival,鈥?a day to thank nature and the farmers' hard work.")
+      ],
+      keys:[ {s:L(["鏄?,"澶?,"涓€","鏍?,"闀?],["zh貌u","y猫","y铆","y脿ng","ch谩ng"]), en:"Day and night are equal."},
+             {s:L(["绋?,"瀛?,"鐔?,"浜?],["d脿o","zi","sh煤","le"]), en:"The rice has ripened."},
+             {s:L(["澶?,"瀹?,"涓€","璧?,"涓?,"鏀?],["d脿","ji膩","y矛","q菒","f膿ng","sh艒u"]), en:"Everyone harvests together."} ],
+      moral:"绉嬪垎鏄煎骞冲垎锛屼赴鏀舵弧婊°€?/ At Qiufen day and night are equal, and the harvest is full." },
+    { id:"hanlu", zh:"瀵掗湶", en:"Cold Dew", level:3,
+      paras:[
+        P("harvest","瀵掗湶涓€鑸湪鍗佹湀鍒濄€傝繖鏃跺€欑殑闇叉按鏇村噳浜嗭紝蹇缁撴垚闇滐紝鎵€浠ュ彨鈥滃瘨闇测€濄€?,"Hanlu falls in early October. The dew is now colder, about to turn to frost 鈥?hence 鈥淐old Dew.鈥?),
+        P("harvest","瀵掗湶鏃讹紝澶╂皵鏇村噳浜嗭紝鏍戝彾鍙樼孩鍙橀粍锛屼竴鐗囩墖鍦拌惤涓嬫潵銆傝強鑺变篃寮€寰楁濂姐€?,"At Hanlu it grows colder still; the leaves turn red and gold and drift down, while chrysanthemums bloom at their best."),
+        P("harvest","姘戦棿鏈夌櫥楂樸€佽祻鑿婄殑涔犳儻銆備汉浠埇涓婇珮灞憋紝鐪嬬湅缇庝附鐨勭鏅紝鍛煎惛娓呮柊鐨勭┖姘斻€?,"There are customs of climbing heights and admiring chrysanthemums: people hike up the hills to enjoy the autumn views and fresh air.")
+      ],
+      keys:[ {s:L(["澶?,"姘?,"鏇?,"鍑?,"浜?],["ti膩n","q矛","g猫ng","li谩ng","le"]), en:"The weather is even colder."},
+             {s:L(["鏍?,"鍙?,"绾?,"浜?],["sh霉","y猫","h贸ng","le"]), en:"The leaves have turned red."},
+             {s:L(["澶?,"瀹?,"鍘?,"鐧?,"楂?],["d脿","ji膩","q霉","d膿ng","g膩o"]), en:"Everyone climbs the hills."} ],
+      moral:"瀵掗湶澶╂皵杞噳锛岀鑹叉缇庛€?/ Hanlu turns cold, and autumn colors shine." },
+    { id:"shuangjiang", zh:"闇滈檷", en:"Frost's Descent", level:3,
+      paras:[
+        P("winter","闇滈檷涓€鑸湪鍗佹湀涓嬫棳锛屾槸绉嬪ぉ鏈€鍚庝竴涓妭姘斻€傚ぉ姘旀洿鍐蜂簡锛屽湴涓婂紑濮嬪嚭鐜扮櫧鐧界殑闇溿€?,"Shuangjiang falls in late October and is the last term of autumn. It grows colder, and white frost begins to appear on the ground."),
+        P("winter","闇滈檷鏃讹紝寰堝鏍戝彾閮借惤鍏変簡锛屽彧鍓╀笅鍏夌绉冪殑鏋濇潯銆傚寳鏂瑰凡缁忚兘鎰熷埌鍐ぉ鐨勮剼姝ャ€?,"At Shuangjiang many trees have shed their leaves, leaving bare branches. In the north, winter's footsteps can already be felt."),
+        P("winter","姘戦棿鏈夐湝闄嶅悆鏌垮瓙鐨勪範鎯紝鎹杩欐牱鍐ぉ鍢村攪灏变笉浼氳銆傛熆瀛愬張鐢滃張濂藉悆銆?,"There is a custom of eating persimmons at Shuangjiang, said to keep lips from chapping in winter. The persimmons are sweet and tasty.")
+      ],
+      keys:[ {s:L(["鍦?,"涓?,"鏈?,"闇?],["d矛","sh脿ng","y菕u","shu膩ng"]), en:"There is frost on the ground."},
+             {s:L(["鏍?,"鍙?,"钀?,"鍏?,"浜?],["sh霉","y猫","lu貌","gu膩ng","le"]), en:"The leaves have all fallen."},
+             {s:L(["闇?,"闄?,"鍚?,"鏌?,"瀛?],["shu膩ng","ji脿ng","ch墨","sh矛","zi"]), en:"At Shuangjiang we eat persimmons."} ],
+      moral:"闇滈檷绉嬪ぉ缁撴潫锛屽瘨鍐皢鑷炽€?/ Shuangjiang ends autumn as winter nears." },
+    { id:"lidong", zh:"绔嬪啲", en:"Start of Winter", level:2,
+      paras:[
+        P("winter","绔嬪啲涓€鑸湪鍗佷竴鏈堝垵锛岃〃绀哄啲澶╁紑濮嬩簡銆傚ぉ姘斿彉鍐凤紝涓囩墿寮€濮嬭棌璧锋潵杩囧啲銆?,"Lidong falls in early November and marks the start of winter. The cold sets in, and all living things begin to store up for the season."),
+        P("winter","绔嬪啲浠ュ悗锛屽寳鏂瑰父甯稿埉璧峰喎椋庯紝鏈夌殑鍦版柟杩樹細涓嬬涓€鍦洪洩銆傚ぇ瀹剁┛涓婁簡鍘氳。鏈嶃€?,"After Lidong, cold winds often blow in the north, and some places see the first snow. People put on thick clothes."),
+        P("winter","姘戦棿鏈夌珛鍐悆楗哄瓙鐨勪範鎯紝鐑吘鑵剧殑楗哄瓙鍚冧笅鍘伙紝鍏ㄨ韩閮芥殩鍜屼簡銆?,"There is a custom of eating dumplings at Lidong; the hot dumplings warm the whole body.")
+      ],
+      keys:[ {s:L(["鍐?,"澶?,"寮€","濮?,"浜?],["d艒ng","ti膩n","k膩i","sh菒","le"]), en:"Winter has begun."},
+             {s:L(["澶?,"姘?,"鍙?,"鍐?,"浜?],["ti膩n","q矛","bi脿n","l臎ng","le"]), en:"The weather has turned cold."},
+             {s:L(["绔?,"鍐?,"鍚?,"楗?,"瀛?],["l矛","d艒ng","ch墨","ji菐o","zi"]), en:"At Lidong we eat dumplings."} ],
+      moral:"绔嬪啲鍐ぉ鏉ヤ复锛屼竾鐗╂敹钘忋€?/ Lidong begins winter, and all things rest." },
+    { id:"xiaoxue", zh:"灏忛洩", en:"Minor Snow", level:2,
+      paras:[
+        P("winter","灏忛洩涓€鑸湪鍗佷竴鏈堜笅鏃€傚ぉ姘旀洿鍐蜂簡锛屽寳鏂瑰紑濮嬩笅闆紝浣嗛洩杩樹笉澶э紝鎵€浠ュ彨鈥滃皬闆€濄€?,"Xiaoxue falls in late November. It grows colder, and snow begins to fall in the north 鈥?but lightly, hence 鈥淢inor Snow.鈥?),
+        P("winter","灏忛洩鏃讹紝澶╃┖鐏拌挋钂欑殑锛屽伓灏旈涓嬪嚑鐗囧皬闆姳銆傛渤闈笂缁撹捣浜嗚杽钖勭殑鍐般€?,"At Xiaoxue the sky is grey, and a few snowflakes drift down now and then. Thin ice forms on the rivers."),
+        P("winter","鏈変簺鍦版柟鏈夊皬闆厡鑿溿€佸仛鑵婅倝鐨勪範鎯紝鎶婇鐗╁瓨璧锋潵锛屽噯澶囪繃涓€涓殩鏆栫殑鍐ぉ銆?,"In some places people pickle vegetables and cure meat at Xiaoxue, storing food to spend a cozy winter.")
+      ],
+      keys:[ {s:L(["寮€","濮?,"涓?,"闆?,"浜?],["k膩i","sh菒","xi脿","xu臎","le"]), en:"It has begun to snow."},
+             {s:L(["澶?,"姘?,"寰?,"鍐?],["ti膩n","q矛","h臎n","l臎ng"]), en:"The weather is very cold."},
+             {s:L(["娌?,"闈?,"缁?,"鍐?,"浜?],["h茅","mi脿n","ji茅","b墨ng","le"]), en:"The river has frozen over."} ],
+      moral:"灏忛洩鍒濋洩椋橀锛屽啲鎰忔笎娴撱€?/ Xiaoxue's first snow drifts as winter deepens." },
+    { id:"daxue", zh:"澶ч洩", en:"Major Snow", level:2,
+      paras:[
+        P("winter","澶ч洩涓€鑸湪鍗佷簩鏈堝垵銆傝繖鏃跺€欓洩涓嬪緱鏇村ぇ鏇村浜嗭紝鍦颁笂甯稿父閾烘弧鍘氬帤鐨勭櫧闆€?,"Daxue falls in early December. Now the snow falls heavier and more often, and the ground is often blanketed in thick white."),
+        P("winter","澶ч洩鏃讹紝澶╁湴涓€鐗囨磥鐧斤紝鏍戞灊涓婃寕婊′簡闆€傚皬鏈嬪弸浠渶鍠滄鍫嗛洩浜恒€佹墦闆粭銆?,"At Daxue the world turns pure white and snow weighs on the branches. Children love to build snowmen and have snowball fights."),
+        P("winter","鍐滄皯璇粹€滅憺闆厗涓板勾鈥濓紝鍘氬帤鐨勯洩鐩栧湪楹︾敯涓婏紝灏卞儚缁欏簞绋肩洊浜嗕竴搴婃殩鏆栫殑琚瓙銆?,"Farmers say 鈥渢imely snow foretells a good year鈥? the thick snow over the wheat is like a warm quilt for the crops.")
+      ],
+      keys:[ {s:L(["闆?,"涓?,"寰?,"寰?,"澶?],["xu臎","xi脿","de","h臎n","d脿"]), en:"The snow falls heavily."},
+             {s:L(["鍒?,"澶?,"鐧?,"鑼?,"鑼?],["d脿o","ch霉","b谩i","m谩ng","m谩ng"]), en:"Everywhere is white."},
+             {s:L(["鎴?,"浠?,"鍫?,"闆?,"浜?],["w菕","men","du墨","xu臎","r茅n"]), en:"We build a snowman."} ],
+      moral:"澶ч洩鐟為洩绾烽锛岄鍏嗕赴骞淬€?/ Daxue's snows foretell a bountiful year." },
+    { id:"dongzhi", zh:"鍐嚦", en:"Winter Solstice", level:2,
+      paras:[
+        P("dumpling","鍐嚦涓€鑸湪鍗佷簩鏈堜笅鏃紝鏄竴骞撮噷榛戝鏈€闀裤€佺櫧澶╂渶鐭殑涓€澶┿€傝繃浜嗗啲鑷筹紝鐧藉ぉ灏变竴澶╁ぉ鍙橀暱銆?,"Dongzhi falls in late December and has the longest night and shortest day of the year. After it, the days grow longer."),
+        P("dumpling","鍦ㄥ彜浠ｏ紝鍐嚦鏄釜寰堥噸瑕佺殑鑺傛棩锛屼汉浠绁銆佸洟鑱氾紝灏卞儚杩囧勾涓€鏍凤紝鎵€浠ユ湁鈥滃啲鑷冲ぇ濡傚勾鈥濈殑璇存硶銆?,"In ancient times Dongzhi was a major festival for honoring ancestors and gathering 鈥?as grand as New Year, people said."),
+        P("dumpling","鍐嚦杩欏ぉ锛屽寳鏂逛汉鍠滄鍚冪儹涔庝箮鐨勯ズ瀛愶紝鍗楁柟浜哄枩娆㈠悆鐢滅敎鐨勬堡鍦嗭紝涓€瀹朵汉鏆栨殩鍦拌繃鍐€?,"On Dongzhi, northerners enjoy hot dumplings and southerners sweet rice balls, families keeping warm together.")
+      ],
+      keys:[ {s:L(["榛?,"澶?,"鏈€","闀?],["h膿i","y猫","zu矛","ch谩ng"]), en:"The night is the longest."},
+             {s:L(["鍖?,"鏂?,"鍚?,"楗?,"瀛?],["b臎i","f膩ng","ch墨","ji菐o","zi"]), en:"In the north we eat dumplings."},
+             {s:L(["鍗?,"鏂?,"鍚?,"姹?,"鍦?],["n谩n","f膩ng","ch墨","t膩ng","yu谩n"]), en:"In the south we eat rice balls."} ],
+      moral:"鍐嚦杩囧悗锛岀櫧澶╀竴澶╁ぉ鍙橀暱銆?/ After Dongzhi, the days grow longer again." },
+    { id:"xiaohan", zh:"灏忓瘨", en:"Minor Cold", level:2,
+      paras:[
+        P("winter","灏忓瘨涓€鑸湪涓€鏈堝垵銆傝繖鏃跺€欏ぉ姘斿緢鍐蜂簡锛屼絾杩樹笉鏄渶鍐风殑鏃跺€欙紝鎵€浠ュ彨鈥滃皬瀵掆€濄€?,"Xiaohan falls in early January. It is very cold now, though not yet the coldest 鈥?hence 鈥淢inor Cold.鈥?),
+        P("winter","灏忓瘨鏃讹紝鍖楅鍛煎懠鍦板惞锛屾渤姘村喕寰楃粨缁撳疄瀹炪€傝厞姊呰姳鍗村湪瀵掗閲屾倓鎮勫紑鏀撅紝鍙堥鍙堢編銆?,"At Xiaohan the north wind howls and the rivers freeze solid, yet the wintersweet quietly blooms in the cold, fragrant and lovely."),
+        P("winter","浜轰滑鐖卞枬鐑堡銆佸悆鐑キ鏉ュ彇鏆栥€傛皯闂磋繕鏈夌啲鑵婂叓绮ョ殑涔犳儻锛屼竴纰椾笅鍘伙紝娴戣韩鏆栧拰銆?,"People warm themselves with hot soup and hot meals. There is also a custom of cooking Laba porridge 鈥?one bowl warms the whole body.")
+      ],
+      keys:[ {s:L(["澶?,"姘?,"寰?,"鍐?],["ti膩n","q矛","h臎n","l臎ng"]), en:"The weather is very cold."},
+             {s:L(["鍖?,"椋?,"鍛?,"鍛?,"鍚?],["b臎i","f膿ng","h奴","h奴","chu墨"]), en:"The north wind howls."},
+             {s:L(["鍠?,"纰?,"鐑?,"绮?],["h膿","w菐n","r猫","zh艒u"]), en:"We have a bowl of hot porridge."} ],
+      moral:"灏忓瘨澶╁瘨鍦板喕锛屾敞鎰忎繚鏆栥€?/ Xiaohan brings deep cold 鈥?keep warm." },
+    { id:"dahan", zh:"澶у瘨", en:"Major Cold", level:2,
+      paras:[
+        P("winter","澶у瘨涓€鑸湪涓€鏈堜笅鏃紝鏄簩鍗佸洓鑺傛皵閲屾渶鍚庝竴涓紝涔熸槸涓€骞撮噷鏈€鍐风殑鏃跺€欍€?,"Dahan falls in late January and is the last of the 24 solar terms 鈥?and the coldest time of the year."),
+        P("winter","澶у瘨鏃讹紝鍒板鍐板ぉ闆湴锛屽懙鍑虹殑姘旈兘鍙樻垚浜嗙櫧闆俱€備絾瀵掑喎杩囧悗锛屾俯鏆栫殑鏄ュぉ灏辫鍥炴潵浜嗐€?,"At Dahan the world is ice and snow, and one's breath turns to white mist. Yet after this cold, warm spring will return."),
+        P("winter","澶у瘨涓€杩囷紝灏卞揩鍒版槬鑺備簡銆傚瀹舵埛鎴峰紑濮嬫墦鎵埧瀛愩€佸噯澶囧勾璐э紝杩庢帴鏂板勾鐨勫埌鏉ャ€?,"Once Dahan passes, Spring Festival is near. Every household cleans the house and prepares New Year goods to welcome the new year.")
+      ],
+      keys:[ {s:L(["澶?,"姘?,"鏈€","鍐?],["ti膩n","q矛","zu矛","l臎ng"]), en:"The weather is the coldest."},
+             {s:L(["鍒?,"澶?,"鍐?,"澶?,"闆?,"鍦?],["d脿o","ch霉","b墨ng","ti膩n","xu臎","d矛"]), en:"Everywhere is ice and snow."},
+             {s:L(["蹇?,"瑕?,"杩?,"骞?,"浜?],["ku脿i","y脿o","gu貌","ni谩n","le"]), en:"The New Year is almost here."} ],
+      moral:"澶у瘨涓€骞存渶鍐凤紝鏄ュぉ灏嗚嚦銆?/ Dahan is the coldest, and spring is on its way." }
+  ]},
+
+  { key:"shenhua", emoji:"馃寵", zh:"绁炶瘽鏁呬簨", en:"Myths", stories:[
+    { id:"pangu", zh:"鐩樺彜寮€澶?, en:"Pangu Creates the World", level:3,
+      paras:[
+        P("egg","寰堜箙寰堜箙浠ュ墠锛屽ぉ鍜屽湴杩樻病鏈夊垎寮€銆傛暣涓笘鐣屽氨鍍忎竴涓法澶х殑楦¤泲锛岄噷闈竴鐗囬粦鏆楋紝浠€涔堜篃鐪嬩笉瑙併€備竴涓彨鐩樺彜鐨勫法浜猴紝灏辩潯鍦ㄨ繖涓ぇ楦¤泲閲岋紝涓€鐫″氨鏄竴涓囧叓鍗冨勾銆?,
+          "Long, long ago, heaven and earth had not yet separated. The whole world was like a giant egg, dark inside with nothing to be seen. A giant named Pangu slept inside this great egg 鈥?for eighteen thousand years."),
+        P("egg","鏈変竴澶╋紝鐩樺彜閱掓潵浜嗐€備粬鐫佸紑鐪肩潧锛屽懆鍥村嵈榛戜箮涔庣殑锛岃繛鑷繁鐨勬墜閮界湅涓嶈銆傜洏鍙よ寰楀張闂峰張闅惧彈锛屼粬鎶撹捣韬竟鐨勪竴鎶婂ぇ鏂уご锛岀敤灏藉叏韬殑鍔涙皵锛屾湞鐫€榛戞殫鐚涘湴涓€鍔堛€?,
+          "One day Pangu awoke. He opened his eyes, but all around was pitch black 鈥?he could not even see his own hands. Feeling stifled and uncomfortable, he seized a great axe at his side and, with all his strength, struck hard at the darkness."),
+        P("pangu","鍙惉鈥滆桨闅嗏€濅竴澹板法鍝嶏紝澶ч浮铔嬭寮€浜嗐€傞噷闈㈠張杞诲張娓呯殑涓滆タ锛屾參鎱㈠線涓婂崌锛屽彉鎴愪簡钃濊摑鐨勫ぉ绌猴紱鍙堥噸鍙堟祳鐨勪笢瑗匡紝鎱㈡參寰€涓嬫矇锛屽彉鎴愪簡鍘氬帤鐨勫ぇ鍦般€傚ぉ鍜屽湴锛岀粓浜庡垎寮€浜嗐€?,
+          "With a thunderous crash, the great egg split apart. The light, clear part slowly rose and became the blue sky; the heavy, murky part slowly sank and became the thick earth. At last, heaven and earth were divided."),
+        P("pangu","鐩樺彜鎬曞ぉ鍜屽湴鍐嶅悎鍒颁竴璧凤紝灏卞ご椤剁潃澶╋紝鑴氳俯鐫€鍦帮紝绋崇ǔ鍦扮珯鍦ㄤ腑闂淬€傚ぉ姣忓ぉ鍗囬珮涓€鐐癸紝鍦版瘡澶╁姞鍘氫竴鐐癸紝鐩樺彜鐨勮韩浣撲篃姣忓ぉ闀块珮涓€鐐广€備粬灏辫繖鏍风珯浜嗕竴涓囧叓鍗冨勾锛屽ぉ鍗囧緱寰堥珮锛屽湴鍙樺緱寰堝帤銆?,
+          "Fearing that heaven and earth might join again, Pangu held up the sky with his head and pressed the earth with his feet, standing firmly between them. Each day the sky rose a little, the earth thickened a little, and Pangu grew a little taller. He stood like this for eighteen thousand years, until the sky was very high and the earth very thick."),
+        P("world","鐩樺彜绱瀬浜嗭紝鏈€鍚庢參鎱㈠€掍簡涓嬪幓銆傜濂囩殑鏄紝浠栫殑韬綋鍙樻垚浜嗕笘鐣屼笂鐨勪竾鐗╋細鍛煎惛鍙樻垚浜嗛鍜屼簯锛屽０闊冲彉鎴愪簡闆峰０锛屽乏鐪煎彉鎴愪簡澶槼锛屽彸鐪煎彉鎴愪簡鏈堜寒銆?,
+          "Utterly exhausted, Pangu at last slowly fell. Wondrously, his body turned into all the things of the world: his breath became wind and clouds, his voice became thunder, his left eye became the sun and his right eye the moon."),
+        P("world","浠栫殑鎵嬭剼鍜岃韩浣撳彉鎴愪簡楂橀珮鐨勫ぇ灞憋紝琛€娑插彉鎴愪簡濂旀祦鐨勬睙娌筹紝姹楁按鍙樻垚浜嗛洦闇诧紝杩炲ご鍙戜篃鍙樻垚浜嗗ぉ涓婄殑鏄熸槦銆傜洏鍙ょ敤鑷繁鐨勮韩浣擄紝鍒涢€犱簡杩欎釜缇庝附鐨勪笘鐣屻€?,
+          "His limbs and body became towering mountains, his blood became rushing rivers, his sweat became rain and dew, and even his hair became the stars in the sky. With his own body, Pangu created this beautiful world.")
+      ],
+      keys:[ {s:L(["澶?,"鍜?,"鍦?,"鍒?,"寮€","浜?],["ti膩n","h茅","d矛","f膿n","k膩i","le"]), en:"Heaven and earth separated."},
+             {s:L(["鐩?,"鍙?,"闈?,"甯?,"鍕?,"鏁?],["p谩n","g菙","f膿i","ch谩ng","y菕ng","g菐n"]), en:"Pangu was very brave."},
+             {s:L(["宸?,"鐪?,"鍙?,"鎴?,"浜?,"澶?,"闃?],["zu菕","y菐n","bi脿n","ch茅ng","le","t脿i","y谩ng"]), en:"His left eye became the sun."},
+             {s:L(["鍙?,"鐪?,"鍙?,"鎴?,"浜?,"鏈?,"浜?],["y貌u","y菐n","bi脿n","ch茅ng","le","yu猫","liang"]), en:"His right eye became the moon."},
+             {s:L(["浠?,"鍒?,"閫?,"浜?,"涓?,"鐣?],["t膩","chu脿ng","z脿o","le","sh矛","ji猫"]), en:"He created the world."} ],
+      moral:"鐩樺彜鐢ㄧ敓鍛藉垱閫犱簡涓栫晫锛屼粬鏃犵鍙堝媷鏁€?/ Pangu gave his life to create the world 鈥?selfless and brave." },
+
+    { id:"houyi", zh:"鍚庣究灏勬棩", en:"Hou Yi Shoots the Suns", level:3,
+      paras:[
+        P("sun","寰堜箙浠ュ墠锛屽ぉ涓婂拷鐒跺嚭鐜颁簡鍗佷釜澶槼銆傚崄涓お闃充竴璧风収鐫€澶у湴锛屾妸娌虫按鏅掑共浜嗭紝鎶婂簞绋肩儰鐒︿簡锛屼汉浠儹寰楁病娉曠敓娲伙紝鐥涜嫤鏋佷簡銆?,
+          "Long ago, ten suns suddenly appeared in the sky. Shining together upon the earth, they dried up the rivers and scorched the crops. The people could hardly live in the terrible heat and suffered greatly."),
+        P("sun","鏈変竴涓姏澶ф棤绌风殑鑻遍泟锛屽悕鍙悗缇裤€備粬鐪嬪埌鐧惧鍙楄嫤锛屽績閲岄潪甯搁毦杩囷紝鍐冲畾涓哄ぇ瀹堕櫎瀹炽€備粬鐧讳笂楂樺北锛屾媺寮€绁炲紦锛屾惌涓婂埄绠€?,
+          "There was a hero of boundless strength named Hou Yi. Seeing the people suffer, his heart ached, and he resolved to rid them of this disaster. He climbed a high mountain, drew his magic bow, and fitted a sharp arrow."),
+        P("sun","鍚庣究鈥滃棖鍡栧棖鈥濆湴灏勫嚭绠紝涓€杩炲皠涓嬩簡涔濅釜澶槼銆傛渶鍚庝粬鐣欎笅涓€涓お闃筹紝璁╁畠姣忓ぉ涓滃崌瑗胯惤锛岀粰澶у湴甯︽潵娓╂殩鍜屽厜鏄庛€備粠姝わ紝浜轰滑鍙堣繃涓婁簡濂芥棩瀛愩€?,
+          "Whoosh, whoosh, whoosh 鈥?Hou Yi loosed his arrows and shot down nine suns one after another. He left a single sun to rise in the east and set in the west each day, bringing warmth and light to the earth. From then on, the people lived well again.")
+      ],
+      keys:[ {s:L(["澶?,"涓?,"鏈?,"鍗?,"涓?,"澶?,"闃?],["ti膩n","sh脿ng","y菕u","sh铆","ge","t脿i","y谩ng"]), en:"There were ten suns in the sky."},
+             {s:L(["鍚?,"缇?,"鏄?,"涓?,"鑻?,"闆?],["h貌u","y矛","sh矛","ge","y墨ng","xi贸ng"]), en:"Hou Yi was a hero."},
+             {s:L(["浠?,"灏?,"涓?,"涔?,"涓?,"澶?,"闃?],["t膩","sh猫","xi脿","ji菙","ge","t脿i","y谩ng"]), en:"He shot down nine suns."},
+             {s:L(["鍙?,"鐣?,"涓?,"涓€","涓?,"澶?,"闃?],["zh菒","li煤","xi脿","y铆","ge","t脿i","y谩ng"]), en:"Only one sun was left."} ],
+      moral:"鍚庣究鍕囨暍鍠勮壇锛屼负澶у闄ゅ銆?/ Hou Yi was brave and kind, saving his people." },
+    { id:"nvwa", zh:"濂冲ú琛ュぉ", en:"N眉wa Mends the Sky", level:3,
+      paras:[
+        P("egg","寰堜箙浠ュ墠锛屽ぉ绌哄拷鐒剁牬浜嗕竴涓ぇ绐熺銆傚ぇ闆ㄤ粠澶╀笂鍊掍笅鏉ワ紝澶х伀鍦ㄥ湴涓婄噧鐑э紝娲按娣规病浜嗙敯鍦帮紝浜轰滑鐢熸椿鍦ㄧ伨闅鹃噷銆?,"Long ago, a great hole suddenly broke open in the sky. Rain poured down, fires raged on the earth, floods drowned the fields, and people lived in disaster."),
+        P("world","鍠勮壇鐨勫コ濞茬湅瑙佷汉浠彈鑻︼紝鍐冲績琛ュソ澶╃┖銆傚ス鎵炬潵浜旂棰滆壊鐨勭煶澶达紝鐢ㄥぇ鐏偧浜嗕節澶╀節澶滐紝鐐兼垚浜嗗張榛忓張绋犵殑娴嗐€?,"The kind goddess N眉wa, seeing the people suffer, resolved to mend the sky. She gathered stones of five colors and smelted them for nine days and nights into a thick, sticky paste."),
+        P("world","濂冲ú鐢ㄨ繖浜斿僵鐭虫祮锛屼竴鐐逛竴鐐规妸澶╀笂鐨勭獰绐胯ˉ濂戒簡銆傚ぇ闆ㄥ仠浜嗭紝澶х伀鐏簡锛屽ぉ绌哄張鍙樺緱鍙堣摑鍙堢編銆備汉浠粓浜庡張杩囦笂浜嗗钩瀹夌殑鏃ュ瓙銆?,"With this five-colored paste, N眉wa patched the hole in the sky bit by bit. The rain stopped, the fires died, and the sky turned blue and beautiful again. At last the people lived in peace.")
+      ],
+      keys:[ {s:L(["澶?,"绌?,"鐮?,"浜?],["ti膩n","k艒ng","p貌","le"]), en:"The sky broke open."},
+             {s:L(["濂?,"濞?,"寰?,"鍠?,"鑹?],["n菤","w膩","h臎n","sh脿n","li谩ng"]), en:"N眉wa was very kind."},
+             {s:L(["濂?,"琛?,"濂?,"浜?,"澶?],["t膩","b菙","h菐o","le","ti膩n"]), en:"She mended the sky."} ],
+      moral:"濂冲ú琛ュぉ鏁戣媿鐢燂紝鍠勮壇鍙堝媷鏁€?/ N眉wa mended the sky to save all 鈥?kind and brave." },
+    { id:"change", zh:"瀚﹀ē濂旀湀", en:"Chang'e Flies to the Moon", level:2,
+      paras:[
+        P("sun","浼犺鍚庣究灏勪笅涔濅釜澶槼锛岀珛浜嗗ぇ鍔燂紝瑗跨帇姣嶉€佺粰浠栦竴棰椾粰鑽€傚悆浜嗚繖棰楄嵂锛屽氨鑳介鍒板ぉ涓婏紝闀跨敓涓嶈€併€?,"Legend says that after Hou Yi shot down nine suns and won great merit, the Queen Mother of the West gave him an elixir. Whoever took it could fly to the heavens and live forever."),
+        P("moon","鍚庣究鑸嶄笉寰楃寮€濡诲瓙瀚﹀ē锛屽氨鎶婁粰鑽氦缁欏ス淇濈銆傛病鎯冲埌锛屼竴涓潖浜鸿秮鍚庣究涓嶅湪锛岄€煎濞ヤ氦鍑轰粰鑽€?,"Unwilling to leave his wife Chang'e, Hou Yi gave her the elixir to keep. But one day a wicked man, while Hou Yi was away, forced Chang'e to hand it over."),
+        P("moon","鍗辨€ヤ箣涓紝瀚﹀ē涓€鍙ｅ悶涓嬩簡浠欒嵂銆傚ス鐨勮韩浣撶珛鍒婚浜嗚捣鏉ワ紝瓒婇瓒婇珮锛屼竴鐩撮鍒颁簡鏈堜寒涓娿€備粠姝わ紝濂瑰氨浣忓湪娓呭喎鐨勬湀瀹噷銆?,"In her peril, Chang'e swallowed the elixir in one gulp. At once her body rose into the air, higher and higher, until she reached the moon. From then on she lived in the cold moon palace.")
+      ],
+      keys:[ {s:L(["鍚?,"缇?,"鏈?,"浠?,"鑽?],["h貌u","y矛","y菕u","xi膩n","y脿o"]), en:"Hou Yi had an elixir."},
+             {s:L(["瀚?,"濞?,"鍚?,"浜?,"鑽?],["ch谩ng","茅","ch墨","le","y脿o"]), en:"Chang'e took the pill."},
+             {s:L(["濂?,"椋?,"鍒?,"鏈?,"浜?],["t膩","f膿i","d脿o","yu猫","liang"]), en:"She flew to the moon."} ],
+      moral:"涓鏈涙湀锛屼汉浠€濆康瀚﹀ē銆?/ At Mid-Autumn we gaze at the moon and think of Chang'e." }
+  ]},
+
+  { key:"chengyu", emoji:"馃摐", zh:"鎴愯鏁呬簨", en:"Idiom Stories", stories:[
+    { id:"wybl", zh:"浜＄緤琛ョ墷", en:"Mend the Pen After Losing a Sheep", level:3,
+      paras:[
+        P("sheep","浠庡墠锛屾湁涓€涓墽缇婁汉锛屽吇鐫€涓€缇ょ緤銆備竴澶╂棭涓婏紝浠栧幓鏀剧緤锛屽彂鐜扮緤灏戜簡涓€鍙€傚師鏉ワ紝缇婂湀鐮翠簡涓€涓礊锛屽閲岀嫾浠庢礊閲岄捇杩涙潵锛屽徏璧颁簡涓€鍙緤銆?,
+          "Once there was a shepherd who kept a flock of sheep. One morning he went to herd them and found one was missing. It turned out the pen had a hole, and in the night a wolf had slipped in and carried off a sheep."),
+        P("fence","閭诲眳鍔濅粬璇达細鈥滃揩鎶婄緤鍦堣ˉ涓€琛ワ紝鍫典笂閭ｄ釜娲炲惂銆傗€濈墽缇婁汉鍗存弧涓嶅湪涔庡湴璇达細鈥滅緤閮藉凡缁忎涪浜嗭紝杩樿ˉ缇婂湀骞蹭粈涔堝憿锛熲€濅粬娌℃湁鍚偦灞呯殑璇濄€?,
+          "A neighbor advised him, \u201cHurry and mend the pen 鈥?block up that hole.\u201d But the shepherd said carelessly, \u201cThe sheep is already lost; what's the use of fixing the pen now?\u201d He did not listen to his neighbor."),
+        P("wolf","缁撴灉锛岀浜屽ぉ鏃╀笂锛屼粬鍙戠幇鍙堝皯浜嗕竴鍙緤銆傜嫾鍙堜粠閭ｄ釜娲為捇杩涙潵锛屽徏璧颁簡涓€鍙€傝繖涓€娆★紝鐗х緤浜哄悗鎮旀瀬浜嗐€?,
+          "As a result, the next morning he found yet another sheep gone. The wolf had again slipped through that hole and stolen one. This time the shepherd was filled with regret."),
+        P("sheepHappy","浠栬刀绱ф嬁鏉ュ伐鍏凤紝缁撶粨瀹炲疄鍦版妸缇婂湀琛ュソ锛屽牭浣忎簡閭ｄ釜娲炪€備粠姝や互鍚庯紝鐙煎啀涔熼捇涓嶈繘鏉ワ紝浠栫殑缇婁竴鍙篃娌℃湁鍐嶄涪杩囥€?,
+          "He quickly fetched his tools and mended the pen firmly, blocking the hole for good. From then on the wolf could never get in, and not a single sheep was ever lost again.")
+      ],
+      keys:[ {s:L(["鐗?,"缇?,"浜?,"涓?,"浜?,"缇?],["m霉","y谩ng","r茅n","di奴","le","y谩ng"]), en:"The shepherd lost a sheep."},
+             {s:L(["缇?,"鍦?,"鐮?,"浜?,"涓?,"娲?],["y谩ng","ju脿n","p貌","le","ge","d貌ng"]), en:"The pen had a hole."},
+             {s:L(["浠?,"璧?,"蹇?,"琛?,"濂?,"缇?,"鍦?],["t膩","g菐n","ku脿i","b菙","h菐o","y谩ng","ju脿n"]), en:"He quickly mended the pen."},
+             {s:L(["鐭?,"閿?,"灏?,"鏀?,"涓?,"绠?,"鏅?],["zh墨","cu貌","ji霉","g菐i","b煤","su脿n","w菐n"]), en:"Fixing a mistake in time is never too late."} ],
+      moral:"鍑轰簡闂鍙婃椂鏀规锛屽氨涓嶇畻鏅氥€?/ Fix a problem in time, and it's never too late." },
+    { id:"huashe", zh:"鐢昏泧娣昏冻", en:"Drawing Legs on a Snake", level:2,
+      paras:[
+        P("crow","鍙ゆ椂鍊欙紝鍑犱釜浜哄緱鍒颁竴澹堕厭锛屽彲鏄汉澶氶厭灏戯紝涓嶅澶у鍠濄€備簬鏄粬浠兂鍑轰竴涓姙娉曪細姣旇禌鍦ㄥ湴涓婄敾铔囷紝璋佸厛鐢诲ソ锛岃皝灏卞枬杩欏６閰掋€?,"Long ago, several men got a pot of wine, but with many people and little wine, there wasn't enough to share. So they held a contest: whoever drew a snake on the ground first would drink the pot."),
+        P("crow","鏈変竴涓汉鐢诲緱鏈€蹇紝涓€涓嬪瓙灏辩敾濂戒簡銆備粬绔捣閰掑６锛屽緱鎰忓湴鎯筹細鎴戣繕鏈夋椂闂达紝骞茶剢缁欒泧娣讳笂鍑犲彧鑴氬惂銆?,"One man drew fastest and finished in no time. Lifting the wine pot, he thought smugly, 鈥淚 still have time 鈥?I'll add some feet to my snake.鈥?),
+        P("crow","姝ｅ綋浠栫敾鑴氱殑鏃跺€欙紝鍙︿竴涓汉涔熺敾濂戒簡锛屼竴鎶婃姠杩囬厭澹惰锛氣€滆泧鏈潵娌℃湁鑴氾紝浣犵敾浜嗚剼锛岄偅灏变笉鏄泧浜嗭紒鈥濈粨鏋滐紝浠栫櫧鐧戒涪浜嗛偅澹堕厭銆?,"As he was drawing the feet, another man finished and snatched the pot, saying, 鈥淪nakes have no feet 鈥?with feet, it's no longer a snake!鈥?And so the first man lost the wine for nothing.")
+      ],
+      keys:[ {s:L(["澶?,"瀹?,"姣?,"璧?,"鐢?,"铔?],["d脿","ji膩","b菒","s脿i","hu脿","sh茅"]), en:"Everyone races to draw a snake."},
+             {s:L(["浠?,"缁?,"铔?,"娣?,"鑴?],["t膩","g臎i","sh茅","ti膩n","ji菐o"]), en:"He added feet to the snake."},
+             {s:L(["缁?,"鏋?,"杈?,"浜?],["ji茅","gu菕","sh奴","le"]), en:"In the end he lost."} ],
+      moral:"澶氭涓€涓撅紝鍙嶈€屽潖浜嗕簨銆?/ Doing more than needed only spoils things." },
+    { id:"jingdi", zh:"浜曞簳涔嬭洐", en:"The Frog in the Well", level:2,
+      paras:[
+        P("frog","鏈変竴鍙潚铔欙紝浠庡皬灏变綇鍦ㄤ竴鍙ｅ張娣卞張绐勭殑浜曢噷銆傚畠姣忓ぉ鐪嬪埌鐨勫ぉ绌猴紝鍙湁浜曞彛閭ｄ箞澶т竴灏忓潡銆?,"There was a frog that had lived since birth in a deep, narrow well. Each day the only sky it saw was a small patch the size of the well's mouth."),
+        P("frog","闈掕洐瑙夊緱鑷繁寰堜簡涓嶈捣锛屽父甯稿鍒汉璇达細鈥滃ぉ涓嶈繃杩欎箞澶э紝浜曚笉杩囪繖涔堟繁锛岃繖鍙ｄ簳灏辨槸涓栫晫涓婃渶濂界殑鍦版柟锛佲€?,"The frog thought itself splendid and often told others, 鈥淭he sky is only this big and the well only this deep 鈥?this well is the finest place in all the world!鈥?),
+        P("crow","鏈変竴澶╋紝涓€鍙粠澶ф捣鏉ョ殑灏忛笩钀藉湪浜曡竟锛屽憡璇夐潚铔欙細鈥滃ぉ澶у緱娌℃湁杈癸紝娴蜂篃鏈涗笉鍒板ご鍛紒鈥濋潚铔欏惉浜嗭紝鎯婅寰楄涓嶅嚭璇濇潵銆?,"One day a little bird from the sea landed at the well and told the frog, 鈥淭he sky is boundless, and the sea stretches beyond sight!鈥?The frog was so astonished it could not speak.")
+      ],
+      keys:[ {s:L(["闈?,"铔?,"浣?,"浜?,"閲?],["q墨ng","w膩","zh霉","j菒ng","l菒"]), en:"The frog lives in a well."},
+             {s:L(["瀹?,"浠?,"涓?,"澶?,"灏?],["t膩","y菒","w茅i","ti膩n","xi菐o"]), en:"It thinks the sky is small."},
+             {s:L(["灏?,"楦?,"璇?,"澶?,"澶?],["xi菐o","ni菐o","shu艒","ti膩n","d脿"]), en:"The bird says the sky is huge."} ],
+      moral:"鐪肩晫瑕佹斁瀹斤紝涓栫晫寰堝ぇ銆?/ Broaden your view 鈥?the world is wide." }
+  ]},
+
+  { key:"yuyan", emoji:"馃", zh:"瀵撹█鏁呬簨", en:"Fables", stories:[
+    { id:"guitu", zh:"榫熷厰璧涜窇", en:"The Tortoise and the Hare", level:2,
+      paras:[
+        P("race","鍏斿瓙璺戝緱寰堝揩锛屽父甯稿槻绗戜箤榫熺埇寰楀お鎱€傛湁涓€澶╋紝涔岄緹涓嶆湇姘旓紝绾﹀厰瀛愭潵涓€鍦鸿禌璺戙€傚厰瀛愬搱鍝堝ぇ绗戯紝鐥涘揩鍦扮瓟搴斾簡銆?,
+          "The hare ran very fast and often mocked the tortoise for crawling too slowly. One day the tortoise, unwilling to be looked down on, challenged the hare to a race. The hare laughed out loud and happily agreed."),
+        P("race","姣旇禌寮€濮嬩簡锛屽厰瀛愪竴涓嬪瓙灏辫窇寰楄€佽繙銆傚畠鍥炲ご涓€鐪嬶紝涔岄緹杩樺湪鍚庨潰鎱㈡參鐖紝灏卞緱鎰忓湴鎯筹細鈥滄垜鍏堢潯涓€瑙夛紝涔熺収鏍疯兘璧€傗€濅簬鏄畠鍦ㄦ爲涓嬬潯鐫€浜嗐€?,
+          "The race began, and the hare dashed far ahead. Looking back and seeing the tortoise still crawling slowly behind, it thought smugly, \u201cI'll take a nap and still win easily.\u201d So it fell asleep under a tree."),
+        P("race","涔岄緹涓€姝ヤ竴姝ワ紝浠庝笉鍋滀笅銆傚畠鎱㈡參鍦扮埇杩囦簡鐫¤鐨勫厰瀛愶紝涓€鐩寸埇鍒扮粓鐐广€傜瓑鍏斿瓙閱掓潵锛屼箤榫熸棭灏辫耽浜嗐€傞獎鍌茬殑鍏斿瓙缇炴劎鏋佷簡銆?,
+          "Step by step, the tortoise never stopped. It slowly crawled past the sleeping hare and on to the finish line. When the hare woke, the tortoise had long since won. The proud hare was deeply ashamed.")
+      ],
+      keys:[ {s:L(["鍏?,"瀛?,"璺?,"寰?,"寰?,"蹇?],["t霉","zi","p菐o","de","h臎n","ku脿i"]), en:"The hare ran very fast."},
+             {s:L(["鍏?,"瀛?,"鐫?,"鐫€","浜?],["t霉","zi","shu矛","zh谩o","le"]), en:"The hare fell asleep."},
+             {s:L(["涔?,"榫?,"涓€","姝?,"姝?,"鍚?,"鍓?],["w奴","gu墨","y铆","b霉","b霉","xi脿ng","qi谩n"]), en:"The tortoise moved on step by step."},
+             {s:L(["涔?,"榫?,"鍏?,"鍒?,"缁?,"鐐?],["w奴","gu墨","xi膩n","d脿o","zh艒ng","di菐n"]), en:"The tortoise reached the finish first."} ],
+      moral:"楠勫偛浣夸汉钀藉悗锛屽潥鎸佹墠鑳芥垚鍔熴€?/ Pride brings failure; persistence brings success." },
+
+    { id:"wuya", zh:"涔岄甫鍠濇按", en:"The Crow and the Water", level:1,
+      paras:[
+        P("crow","涓€鍙箤楦﹀彛娓翠簡锛屽埌澶勬壘姘村枬銆傚畠椋炲憖椋烇紝缁堜簬鐪嬭涓€涓摱瀛愶紝鐡跺瓙閲屾湁涓€鐐圭偣姘淬€傚彲鏄摱鍙ｅお灏忥紝姘村張澶祬锛屼箤楦︽€庝箞涔熷枬涓嶅埌銆?,
+          "A thirsty crow searched everywhere for water. It flew and flew until at last it spotted a bottle with a little water inside. But the mouth was too narrow and the water too shallow 鈥?try as it might, the crow could not reach it."),
+        P("crow","涔岄甫鎯充簡鎯筹紝鐪嬭鏃佽竟鏈夎澶氬皬鐭冲瓙銆傚畠灏变竴棰椾竴棰楀湴鎶婄煶瀛愬徏杩涚摱瀛愰噷銆傜煶瀛愯秺鏉ヨ秺澶氾紝鐡堕噷鐨勬按涔熷氨鎱㈡參鍗囬珮浜嗐€?,
+          "The crow thought for a moment, then noticed many pebbles nearby. One by one it dropped the pebbles into the bottle. As the pebbles piled up, the water in the bottle slowly rose."),
+        P("crow","姘村崌鍒扮摱鍙ｏ紝涔岄甫缁堜簬鍠濆埌浜嗘按銆傚畠楂樺叴鍦板枬浜嗕釜鐥涘揩銆傚師鏉ワ紝閬囧埌鍥伴毦鍙鑲姩鑴戠瓔锛屽氨涓€瀹氳兘鎯冲嚭鍔炴硶銆?,
+          "When the water reached the top, the crow finally drank its fill, delighted. It turns out that when you meet a problem, as long as you use your head, you can always find a way.")
+      ],
+      keys:[ {s:L(["涔?,"楦?,"鍙?,"娓?,"浜?],["w奴","y膩","k菕u","k臎","le"]), en:"The crow was thirsty."},
+             {s:L(["鐡?,"閲?,"姘?,"寰?,"灏?],["p铆ng","l菒","shu菒","h臎n","sh菐o"]), en:"There was little water in the bottle."},
+             {s:L(["涔?,"楦?,"鏀?,"杩?,"鐭?,"瀛?],["w奴","y膩","f脿ng","j矛n","sh铆","z菒"]), en:"The crow dropped in pebbles."},
+             {s:L(["涔?,"楦?,"鍠?,"鍒?,"浜?,"姘?],["w奴","y膩","h膿","d脿o","le","shu菒"]), en:"The crow drank the water."} ],
+      moral:"閬囧埌鍥伴毦瑕佸鍔ㄨ剳绛嬨€?/ When trouble comes, use your head." },
+    { id:"shouzhu", zh:"瀹堟牚寰呭厰", en:"Waiting by the Tree for a Rabbit", level:3,
+      paras:[
+        P("race","浠庡墠鏈変釜鍐滃か锛屾瘡澶╁湪鐢伴噷杈涜嫤鍦扮鍦般€傛湁涓€澶╋紝涓€鍙厰瀛愯窇寰楀お蹇紝涓€澶存挒鍦ㄧ敯杈圭殑鏍戞々涓婏紝姝讳簡銆?,"Once a farmer toiled in his field each day. One day a rabbit ran so fast that it crashed headlong into a tree stump at the field's edge and died."),
+        P("sheep","鍐滃か楂樺叴鏋佷簡锛岀櫧鐧芥崱鍒颁竴鍙偉鍏斿瓙銆備粬鎯筹細瑕佹槸澶╁ぉ閮借兘杩欐牱灏卞ソ浜嗭紒浜庢槸浠栨墧涓嬮攧澶达紝姣忓ぉ瀹堝湪鏍戞々鏃佽竟銆?,"The farmer was overjoyed to get a fat rabbit for nothing. He thought, 鈥淚f only this happened every day!鈥?So he dropped his hoe and waited by the stump all day long."),
+        P("fence","鍙槸锛屽啀涔熸病鏈夊厰瀛愭挒涓婃潵銆傜敯閲岀殑搴勭鍥犱负娌′汉鐓ч【锛屽叏閮芥灟姝讳簡銆傚啘澶張楗垮張鍚庢倲銆?,"But no more rabbits ever came. With no one to tend them, the crops all withered. The farmer was left hungry and full of regret.")
+      ],
+      keys:[ {s:L(["鍏?,"瀛?,"鎾?,"鏍?,"妗?],["t霉","zi","zhu脿ng","sh霉","zhu膩ng"]), en:"The rabbit hit the tree stump."},
+             {s:L(["鍐?,"澶?,"澶?,"澶?,"绛?],["n贸ng","f奴","ti膩n","ti膩n","d臎ng"]), en:"The farmer waited every day."},
+             {s:L(["搴?,"绋?,"鏋?,"姝?,"浜?],["zhu膩ng","jia","k奴","s菒","le"]), en:"The crops withered and died."} ],
+      moral:"闈犺繍姘斾笉鍔冲姩锛岀粓绌朵竴鏃犳墍鑾枫€?/ Relying on luck instead of work gains nothing." },
+    { id:"hujia", zh:"鐙愬亣铏庡▉", en:"The Fox Borrows the Tiger's Might", level:3,
+      paras:[
+        P("wolf","鍦ㄤ竴鐗囧ぇ妫灄閲岋紝鑰佽檸鏄櫨鍏戒箣鐜嬨€傛湁涓€澶╋紝鑰佽檸鎶撲綇浜嗕竴鍙嫛鐚剧殑鐙愮嫺锛屾鍑嗗鎶婂畠鍚冩帀銆?,"In a great forest, the tiger was king of beasts. One day the tiger caught a cunning fox and was about to eat it."),
+        P("wolf","鐙愮嫺鐪肩彔涓€杞紝澶у０璇达細鈥滀綘涓嶈兘鍚冩垜锛佹垜鏄€佸ぉ鐖锋淳鏉ョ殑澶х帇锛岃皝鏁㈠悆鎴戯紵涓嶄俊浣犺窡鎴戣蛋涓€瓒熴€傗€?,"The fox's eyes darted about and it cried, 鈥淵ou can't eat me! Heaven sent me to be king of the beasts. Who dares eat me? If you doubt it, walk with me.鈥?),
+        P("sheep","鑰佽檸鍗婁俊鍗婄枒锛岃窡鍦ㄧ嫄鐙稿悗闈€傛．鏋楅噷鐨勫姩鐗╀竴鐪嬭鑰佽檸锛屽悡寰楃悍绾烽€冭窇銆傜嫄鐙稿緱鎰忔瀬浜嗭紝鑰佽檸鍗翠互涓哄ぇ瀹剁湡鐨勬€曠嫄鐙搞€?,"Half believing, the tiger followed behind the fox. Seeing the tiger, the forest animals fled in terror. The fox was smug, while the tiger thought they truly feared the fox.")
+      ],
+      keys:[ {s:L(["鑰?,"铏?,"鎶?,"鐙?,"鐙?],["l菐o","h菙","zhu膩","h煤","li"]), en:"The tiger caught the fox."},
+             {s:L(["鐙?,"鐙?,"璇?,"澶?,"璇?],["h煤","li","shu艒","d脿","hu脿"]), en:"The fox told a big lie."},
+             {s:L(["鍔?,"鐗?,"瀹?,"鎬?,"鑰?,"铏?],["d貌ng","w霉","h脿i","p脿","l菐o","h菙"]), en:"The animals feared the tiger."} ],
+      moral:"鐙愮嫺鍊熻€佽檸鐨勫▉椋庡悡鍞埆浜恒€?/ The fox used the tiger's power to frighten others." }
+  ]}
+];
+
+// fill later with real 鍎挎瓕. null = nothing shown.
+const RHYMES = {
+  "initials-0":{ title:"澹版瘝姝?路 b p m f d t n l", speak:"鍙充笅鍗婂渾 b b b锛屽彸涓婂崐鍦?p p p锛屼袱涓棬娲?m m m锛屼竴鏍规嫄妫?f f f",
+    text:"鍙充笅鍗婂渾 b b b\n鍙充笂鍗婂渾 p p p\n涓や釜闂ㄦ礊 m m m\n涓€鏍规嫄妫?f f f" },
+  "initials-1":{ title:"澹版瘝姝?路 g k h j q x", speak:"楦藉瓙椋為 g g g锛岃潓铓父娓?k k k锛屼竴鎶婃瀛?h h h",
+    text:"楦藉瓙椋為 g g g\n铦岃毆娓告父 k k k\n涓€鎶婃瀛?h h h\n姣嶉浮铔嬭泲 j j j" },
+  "initials-2":{ title:"澹版瘝姝?路 zh ch sh r z c s", speak:"z 鍔犳瀛?zh zh zh锛宑 鍔犳瀛?ch ch ch锛宻 鍔犳瀛?sh sh sh",
+    text:"z 鍔犳瀛?zh zh zh\nc 鍔犳瀛?ch ch ch\ns 鍔犳瀛?sh sh sh\n灏忚嫍鍙戣娊 r r r" },
+  "finals-0":{ title:"鍗曢煹姣嶆瓕", speak:"寮犲ぇ鍢村反 a a a锛屽渾鍦嗗槾宸?o o o锛屾墎鎵佸槾宸?e e e",
+    text:"寮犲ぇ鍢村反 a a a\n鍦嗗渾鍢村反 o o o\n鎵佹墎鍢村反 e e e\n鐗欓娇瀵归綈 i i i" },
+  "finals-1":{ title:"澶嶉煹姣嶆瓕", speak:"a 鍦ㄥ墠闈?ai ai ai锛宔 鍦ㄥ墠闈?ei ei ei锛宎 o 鐩歌繛 ao ao ao",
+    text:"a 鍦ㄥ墠闈?ai ai ai\ne 鍦ㄥ墠闈?ei ei ei\na o 鐩歌繛 ao ao ao\no u 鐩歌繛 ou ou ou" },
+  "finals-2":{ title:"榧婚煹姣嶆瓕", speak:"a 鍚庤窡 n锛宎n an an锛沞 鍚庤窡 n锛宔n en en",
+    text:"a 鍚庤窡 n锛宎n an an\ne 鍚庤窡 n锛宔n en en\ni 鍚庤窡 n锛宨n in in\na 鍚?ng锛宎ng ang ang" },
+  "whole-0":{ title:"鏁翠綋璁よ姝?, speak:"缈樿垖闊?zhi chi shi ri锛屽钩鑸岄煶 zi ci si锛屾暣浣撹璇昏蹇冮噷",
+    text:"缈樿垖 zhi chi shi ri\n骞宠垖 zi ci si\n鐪嬭瀹冧滑鍒嫾璇籠n鏁翠綋璁よ璁板績閲? },
+  "whole-1":{ title:"鏁翠綋璁よ姝?, speak:"澶?y 甯?i锛寉i锛涘ぇ w 甯?u锛寃u锛泍 瑙?眉锛岃劚甯?yu",
+    text:"澶?y 甯?i锛寉i\n澶?w 甯?u锛寃u\ny 瑙?眉 鏉ヨ劚甯絓n鍙樻垚 yu 绗戝搱鍝? },
+  "tones":{ title:"鏍囪皟姝?, speak:"鏈?a 涓嶆斁杩囷紝娌?a 鎵?o e锛宨 u 骞跺垪鏍囧湪鍚庯紝灏?眉 瑙侀潰瑕佽劚甯?,
+    text:"鏈?a 涓嶆斁杩嘰n娌?a 鎵?o e\ni u 骞跺垪鏍囧湪鍚嶾n灏?眉 瑙侀潰瑕佽劚甯? },
+  "sentence":null,"paragraph":null
+};
+
+const UNITS = [
+  { id:"initials", title:"澹版瘝 Initials", sub:"3 chapters 路 b p m f 鈥?, emoji:"馃悵", cls:"u-leaf",
+    chapters:[
+      {name:"Chapter 1", desc:"b p m f d t n l", data:INITIALS_1},
+      {name:"Chapter 2", desc:"g k h j q x",    data:INITIALS_2},
+      {name:"Chapter 3", desc:"zh ch sh r z c s y w", data:INITIALS_3}
+    ]},
+  { id:"finals", title:"闊垫瘝 Finals", sub:"3 chapters 路 a o e i u 眉 鈥?, emoji:"馃幍", cls:"u-berry",
+    chapters:[
+      {name:"Chapter 1", desc:"single: a o e i u 眉", data:FINALS_1},
+      {name:"Chapter 2", desc:"ai ei ui ao ou iu 鈥?, data:FINALS_2},
+      {name:"Chapter 3", desc:"an en in un ang 鈥?,  data:FINALS_3}
+    ]},
+  { id:"tones", title:"澹拌皟 Tones", sub:"tone-mark rules + test", emoji:"銆帮笍", cls:"u-rose", special:"rules", toneQ:TONE_Q },
+  { id:"whole", title:"鏁翠綋璁よ Whole syllables", sub:"2 chapters 路 zhi chi shi 鈥?, emoji:"馃З", cls:"u-sky",
+    chapters:[
+      {name:"Chapter 1", desc:"zhi chi shi ri zi ci si", data:WHOLE_1},
+      {name:"Chapter 2", desc:"yi wu yu ye yue 鈥?, data:WHOLE_2}
+    ]},
+  { id:"sentence", title:"鍙ュ瓙 Sentences", sub:"meet Polly 路 15 sentences", emoji:"馃挰", cls:"u-grape", special:"sentence" },
+  { id:"stories", title:"鏁呬簨 Stories", sub:"Chinese culture 路 pinyin + English", emoji:"馃摉", cls:"u-rose", special:"stories" }
+];
+
+/* ============ SPEECH ============ */
+let zhVoice=null;
+function pickVoice(){ const v=speechSynthesis.getVoices(); zhVoice=v.find(x=>x.lang&&x.lang.toLowerCase().startsWith("zh"))||null; }
+pickVoice();
+if(typeof speechSynthesis!=="undefined") speechSynthesis.onvoiceschanged=pickVoice;
+function speak(text){
+  if(typeof speechSynthesis==="undefined") return null;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text); u.lang="zh-CN"; if(zhVoice)u.voice=zhVoice; u.rate=.8;
+  speechSynthesis.speak(u); return u;
+}
+const CLEAN_SPEAK = {
+  b:"\u73bb", p:"\u5761", m:"\u6478", f:"\u4f5b", d:"\u5f97", t:"\u7279", n:"\u8bb7", l:"\u52d2",
+  g:"\u54e5", k:"\u79d1", h:"\u559d", j:"\u57fa", q:"\u6b3a", x:"\u5e0c",
+  zh:"\u77e5", ch:"\u86a9", sh:"\u8bd7", r:"\u65e5", z:"\u8d44", c:"\u96cc", s:"\u601d", y:"\u8863", w:"\u4e4c",
+  a:"\u554a", o:"\u6b27", e:"\u9e45", i:"\u8863", u:"\u4e4c", v:"\u8fc2", "\u00fc":"\u8fc2", "\u7709":"\u8fc2",
+  ai:"\u54c0", ei:"\u6b38", ui:"\u5a01", ao:"\u71ac", ou:"\u6b27", iu:"\u4f18", ie:"\u8036", "\u00fce":"\u7ea6", "\u7709e":"\u7ea6", er:"\u513f",
+  an:"\u5b89", en:"\u6069", in:"\u56e0", un:"\u6e29", ang:"\u6602", eng:"\u4ea8", ing:"\u82f1", ong:"\u7fc1",
+  zhi:"\u77e5", chi:"\u86a9", shi:"\u8bd7", ri:"\u65e5", zi:"\u8d44", ci:"\u96cc", si:"\u601d",
+  yi:"\u8863", wu:"\u4e4c", yu:"\u8fc2", ye:"\u8036", yue:"\u7ea6", yuan:"\u51a4", yin:"\u56e0", yun:"\u6655", ying:"\u82f1",
+  hao:"\u597d", fei:"\u98de", zou:"\u8d70", liu:"\u516d", shui:"\u6c34", nv:"\u5973", lv:"\u7eff", xue:"\u5b66", gui:"\u8d35", jiu:"\u4e5d"
+};
+const SPEECH_ACCEPT = {
+  b:["\u73bb","\u6ce2"], p:["\u5761"], m:["\u6478","\u6469"], f:["\u4f5b"], d:["\u5f97"], t:["\u7279"], n:["\u8bb7"], l:["\u52d2"],
+  g:["\u54e5"], k:["\u79d1","\u9897"], h:["\u559d","\u5475"], j:["\u57fa","\u9e21"], q:["\u6b3a","\u4e03"], x:["\u5e0c","\u897f"],
+  zh:["\u77e5"], ch:["\u86a9","\u5403"], sh:["\u8bd7","\u5e08"], r:["\u65e5"], z:["\u8d44"], c:["\u96cc"], s:["\u601d"],
+  a:["\u554a"], o:["\u6b27"], e:["\u9e45"], i:["\u8863"], u:["\u4e4c"], v:["\u8fc2","\u9c7c"], "\u7709":["\u8fc2","\u9c7c"],
+  ai:["\u54c0","\u7231"], ei:["\u6b38","\u8bf6"], ui:["\u5a01"], ao:["\u71ac","\u5965"], ou:["\u6b27"], iu:["\u4f18"], ie:["\u8036"], "\u7709e":["\u7ea6","\u6708"], er:["\u513f"],
+  an:["\u5b89"], en:["\u6069"], in:["\u56e0","\u97f3"], un:["\u6e29"], ang:["\u6602"], eng:["\u4ea8","\u97f2"], ing:["\u82f1"], ong:["\u7fc1"],
+  zhi:["\u77e5"], chi:["\u86a9","\u5403"], shi:["\u8bd7","\u5e08"], ri:["\u65e5"], zi:["\u8d44"], ci:["\u96cc"], si:["\u601d"],
+  yi:["\u8863","\u4e00"], wu:["\u4e4c"], yu:["\u8fc2","\u9c7c"], ye:["\u8036"], yue:["\u7ea6","\u6708"], yuan:["\u51a4","\u5706"], yin:["\u56e0","\u97f3"], yun:["\u6655","\u4e91"], ying:["\u82f1"]
+};
+function normalizePinyinInput(v){
+  return String(v||"").trim().toLowerCase().replace(/u:/g,"v").replace(/\u00fc/g,"v").replace(/\u7709/g,"v").replace(/\s+/g,"");
+}
+function cleanSpeakText(itemOrPinyin){
+  const raw = typeof itemOrPinyin==="string" ? itemOrPinyin : (itemOrPinyin&&itemOrPinyin.s);
+  const key = normalizePinyinInput(raw);
+  return CLEAN_SPEAK[key] || CLEAN_SPEAK[key.replace(/v/g,"\u00fc")] || (itemOrPinyin&&itemOrPinyin.c) || raw || "";
+}
+const KID_SOUND_LABEL = {
+  b:"bo", p:"po", m:"mo", f:"fo", d:"de", t:"te", n:"ne", l:"le",
+  g:"ge", k:"ke", h:"he", j:"ji", q:"qi", x:"xi",
+  zh:"zhi", ch:"chi", sh:"shi", r:"ri", z:"zi", c:"ci", s:"si", y:"yi", w:"wu",
+  a:"a", o:"ou", e:"e", i:"yi", u:"wu", v:"yu", "\u00fc":"yu", "\u7709":"yu",
+  ai:"ai", ei:"ei", ui:"ui", ao:"ao", ou:"ou", iu:"iu", ie:"ie", "\u00fce":"yue", "\u7709e":"yue", er:"er",
+  an:"an", en:"en", in:"yin", un:"wen", ang:"ang", eng:"eng", ing:"ying", ong:"ong",
+  zhi:"zhi", chi:"chi", shi:"shi", ri:"ri", zi:"zi", ci:"ci", si:"si",
+  yi:"yi", wu:"wu", yu:"yu", ye:"ye", yue:"yue", yuan:"yuan", yin:"yin", yun:"yun", ying:"ying"
+};
+const KID_SOUND_HINT = {
+  b:"Close your lips, then release. Do not say the English letter 鈥渂ee鈥?",
+  p:"Like 鈥渂o鈥? but with a puff of air.",
+  m:"Close your lips and hum first.",
+  f:"Top teeth lightly touch the lower lip.",
+  d:"Tongue taps behind the teeth. Do not say English 鈥渄ee鈥?",
+  t:"Like 鈥渄e鈥? but with a puff of air.",
+  n:"Tongue touches behind the teeth; air goes through the nose.",
+  l:"Tongue touches behind the teeth; let the sound flow.",
+  zh:"Curl the tongue slightly back.",
+  ch:"Curl the tongue back and add a puff of air.",
+  sh:"Curl the tongue slightly back, like a soft 鈥渟h鈥?",
+  r:"Curl the tongue back; make a light buzzing sound.",
+  z:"Flat tongue, no puff of air.",
+  c:"Flat tongue with a puff of air.",
+  s:"Flat tongue, like a clear 鈥渟鈥?",
+  j:"Tongue is forward and high.",
+  q:"Like 鈥渏i鈥? but with a puff of air.",
+  x:"Soft forward 鈥渟h鈥?like sound."
+};
+function kidSoundLabel(itemOrPinyin){
+  const raw=typeof itemOrPinyin==="string" ? itemOrPinyin : (itemOrPinyin&&itemOrPinyin.s);
+  const key=normalizePinyinInput(raw);
+  return KID_SOUND_LABEL[key] || KID_SOUND_LABEL[key.replace(/v/g,"\u00fc")] || raw || "";
+}
+function kidSoundHint(itemOrPinyin){
+  const key=normalizePinyinInput(typeof itemOrPinyin==="string" ? itemOrPinyin : (itemOrPinyin&&itemOrPinyin.s));
+  return KID_SOUND_HINT[key] || "Listen to the model, then copy the mouth shape and sound.";
+}
+function speakPinyin(itemOrPinyin){ return speak(cleanSpeakText(itemOrPinyin)); }
+function resetPronunciation(){}
+function savePronunciationAttempt(entry){
+  try{
+    const key="pinyinPalPronunciationAttemptsV3";
+    const arr=JSON.parse(localStorage.getItem(key)||"[]");
+    arr.push(Object.assign({time:new Date().toISOString()}, entry));
+    localStorage.setItem(key, JSON.stringify(arr.slice(-500)));
+  }catch(_){}
+}
+function speechRecognitionApi(){ return window.SpeechRecognition || window.webkitSpeechRecognition; }
+function expectedSpeechList(target){
+  const key=normalizePinyinInput(target);
+  return SPEECH_ACCEPT[key] || SPEECH_ACCEPT[key.replace(/v/g,"\u7709")] || [cleanSpeakText(key)];
+}
+function transcriptMatchesTarget(transcript, target){
+  const compact=String(transcript||"").replace(/\s+/g,"");
+  return expectedSpeechList(target).some(x=>x && compact.includes(x));
+}
+function recognitionErrorType(){
+  if(curUnit&&curUnit.id==="initials") return "consonant";
+  if(curUnit&&curUnit.id==="finals") return "vowel/final";
+  return "pinyin";
+}
+function cheer(){ const m=document.getElementById("mascot"); m.classList.remove("cheer"); void m.offsetWidth; m.classList.add("cheer"); }
+
+/* ============ NAV ============ */
+const SECTIONS=["home","chapters","detail","rulesView","textView","quizView","recordView","bookView"];
+function show(id){ SECTIONS.forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id)); window.scrollTo(0,0); }
+function goHome(){ speechSynthesis.cancel(); show("home"); }
+
+/* ============ HOME ============ */
+const unitList=document.getElementById("unitList");
+UNITS.forEach(u=>{
+  const b=document.createElement("button"); b.className="unit "+u.cls;
+  b.innerHTML='<span class="big">'+u.emoji+'</span><span class="txt"><h2>'+u.title+'</h2><span>'+u.sub+'</span></span><span class="arrow">鈫?/span>';
+  b.onclick=()=>openUnit(u); unitList.appendChild(b);
+});
+function openUnit(u){
+  if(u.special==="rules"){ renderRhyme(document.getElementById("ruleRhyme"),"tones"); show("rulesView"); return; }
+  if(u.special==="sentence"){ openText(u); return; }
+  if(u.special==="stories"){ openStoryList(); return; }
+  curUnit=u;
+  document.getElementById("chaptersTitle").textContent=u.title;
+  const list=document.getElementById("chapterList"); list.innerHTML="";
+  u.chapters.forEach((ch,i)=>{
+    const b=document.createElement("button"); b.className="chapter";
+    b.innerHTML='<span class="num">'+(i+1)+'</span><span class="ctxt"><h3>'+ch.name+'</h3><span>'+ch.desc+'</span></span><span class="go">鈻?/span>';
+    b.onclick=()=>openChapter(u,i); list.appendChild(b);
+    // small chapter test
+    const t=document.createElement("button"); t.className="chapter test";
+    t.innerHTML='<span class="num">鈽?/span><span class="ctxt"><h3>'+ch.name+' test</h3><span>5 questions</span></span><span class="go">鈻?/span>';
+    t.onclick=()=>startQuiz(u,"chapter",i); list.appendChild(t);
+  });
+  // big unit test
+  const big=document.createElement("button"); big.className="chapter bigtest";
+  big.innerHTML='<span class="num">馃弳</span><span class="ctxt"><h3>Big unit test</h3><span>20 questions 路 all chapters</span></span><span class="go">鈻?/span>';
+  big.onclick=()=>startQuiz(u,"unit"); list.appendChild(big);
+  show("chapters");
+}
+
+/* ============ RHYME ============ */
+function renderRhyme(slotEl,key){
+  const r=RHYMES[key];
+  if(!r){ slotEl.innerHTML=""; return; }
+  slotEl.innerHTML='<div class="rhyme"><div class="rt">馃幎 '+(r.title||"Sing-along rhyme")+'</div><div class="rb">'+r.text+'</div>'+
+    (r.speak?'<button class="play-rhyme" onclick="speak(\''+r.speak+'\')">馃攰 Hear it</button>':'')+'</div>';
+}
+
+/* ============ SYLLABLE LEARN ============ */
+let curUnit=null, cur={list:[],idx:0,key:""};
+function openChapter(u,ci){
+  const ch=u.chapters[ci];
+  cur={list:ch.data, idx:0, key:u.id+"-"+ci};
+  document.getElementById("detailTitle").textContent=u.title+" 路 "+ch.name;
+  document.getElementById("detailBack").onclick=()=>openUnit(u);
+  renderRhyme(document.getElementById("rhymeSlot"), cur.key);
+  buildStrip(); renderItem(true); show("detail");
+}
+function buildStrip(){
+  const strip=document.getElementById("strip"); strip.innerHTML="";
+  cur.list.forEach((it,i)=>{
+    const c=document.createElement("button"); c.className="chip"+(i===cur.idx?" active":""); c.textContent=it.s;
+    c.onclick=()=>{ cur.idx=i; renderItem(); }; strip.appendChild(c);
+  });
+}
+function renderItem(silent){
+  const it=cur.list[cur.idx];
+  document.getElementById("display").textContent=it.s;
+  document.getElementById("subChar").textContent="like in 銆?+it.c+"銆?;
+  [...document.getElementById("strip").children].forEach((c,i)=>c.classList.toggle("active",i===cur.idx));
+  document.getElementById("prevBtn").disabled=cur.idx===0;
+  document.getElementById("nextBtn").disabled=cur.idx===cur.list.length-1;
+  resetRecording(); document.getElementById("wdone").textContent="";
+  clearPad();
+  if(!silent){ speak(it.c); cheer(); }
+}
+function speakCurrent(){ const it=cur.list[cur.idx]; speak(it.c); cheer(); }
+function step(d){
+  const n=cur.idx+d; if(n<0||n>=cur.list.length) return;
+  cur.idx=n; renderItem();
+  const chip=document.getElementById("strip").children[cur.idx];
+  if(chip) chip.scrollIntoView({inline:"center",behavior:"smooth",block:"nearest"});
+}
+
+/* ============ RECORDING ============ */
+let mediaRec=null, chunks=[], recURL=null, recSpeech=null, recScore=null;
+function resetRecording(){
+  document.getElementById("recStart").disabled=false;
+  document.getElementById("recStop").disabled=true;
+  document.getElementById("recPlay").disabled=true;
+  document.getElementById("recHint").textContent="Tap 鈥淩ecord me鈥? say it out loud, then get a score!";
+  if(recURL){ URL.revokeObjectURL(recURL); recURL=null; }
+  if(recSpeech){ try{ recSpeech.abort(); }catch(_){} recSpeech=null; }
+  recScore=null;
+}
+function scoreStars(score){
+  const n=score>=90?3:score>=72?2:score>=55?1:0;
+  return "鈽?.repeat(n)+"鈽?.repeat(3-n);
+}
+function scoreFromSpeech(alternatives, target){
+  const list=(alternatives||[]).map(r=>typeof r==="string"?{transcript:r,confidence:.6}:r);
+  const ok=list.some(r=>transcriptMatchesTarget(r.transcript,target));
+  const confidence=Math.max(...list.map(r=>Number.isFinite(r.confidence)?r.confidence:.55), .35);
+  const score=ok ? Math.min(100, Math.round(82 + confidence*18)) : Math.max(25, Math.round(40 + confidence*25));
+  return {ok, score, alternatives:list, errorType:ok?"correct":recognitionErrorType()};
+}
+function showRecordingScore(result){
+  const it=cur.list[cur.idx]; if(!it||!result) return;
+  const hint=document.getElementById("recHint");
+  const stars=scoreStars(result.score);
+  const msg=result.ok
+    ? "Score "+result.score+"/100 "+stars+" - Great! That matched "+it.s+" ("+kidSoundLabel(it)+")."
+    : "Score "+result.score+"/100 "+stars+" - Try "+it.s+" like "+kidSoundLabel(it)+". "+kidSoundHint(it);
+  hint.textContent=msg;
+  savePronunciationAttempt({
+    unit:curUnit?curUnit.id:"",
+    key:cur.key,
+    target:it.s,
+    heard:result.alternatives.map(r=>r.transcript).join(" / "),
+    expectedPinyin:kidSoundLabel(it),
+    score:result.score,
+    errorType:result.errorType,
+    correct:result.ok
+  });
+}
+async function recStart(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const it=cur.list[cur.idx];
+    chunks=[]; recScore=null; mediaRec=new MediaRecorder(stream);
+    mediaRec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
+    mediaRec.onstop=()=>{
+      const blob=new Blob(chunks,{type:"audio/webm"});
+      if(recURL) URL.revokeObjectURL(recURL); recURL=URL.createObjectURL(blob);
+      document.getElementById("recPlay").disabled=false;
+      if(!recScore) document.getElementById("recHint").textContent="Recording saved. I could not score it clearly; try again in Chrome or Edge.";
+      stream.getTracks().forEach(t=>t.stop());
+    };
+    mediaRec.start();
+    const SR=speechRecognitionApi();
+    if(SR&&it){
+      recSpeech=new SR();
+      recSpeech.lang="zh-CN"; recSpeech.interimResults=false; recSpeech.maxAlternatives=5;
+      recSpeech.onresult=(event)=>{
+        recScore=scoreFromSpeech(Array.from(event.results[0]||[]), it.s);
+        showRecordingScore(recScore);
+      };
+      recSpeech.onerror=()=>{ if(!recScore) document.getElementById("recHint").textContent="Recording... scoring could not hear clearly yet."; };
+      recSpeech.start();
+    }
+    document.getElementById("recStart").disabled=true;
+    document.getElementById("recStop").disabled=false;
+    document.getElementById("recHint").textContent="Recording and scoring... say "+it.s+" like 鈥?+kidSoundLabel(it)+"鈥?";
+  }catch(err){ document.getElementById("recHint").textContent="Couldn鈥檛 use the mic. Please allow microphone access 馃檹"; }
+}
+function recStop(){
+  if(mediaRec&&mediaRec.state!=="inactive") mediaRec.stop();
+  if(recSpeech){ try{ recSpeech.stop(); }catch(_){} }
+  document.getElementById("recStart").disabled=false;
+  document.getElementById("recStop").disabled=true;
+}
+function recPlay(){ if(recURL){ const a=new Audio(recURL); a.play(); } }
+
+/* ============ STROKE TEMPLATES (handwriting) ============
+   A template = array of strokes. Each stroke = array of {x,y} in 0..1 space.
+   Built-in a,b are placeholders so it runs; re-record real ones in 鈿?Record mode. */
+function circlePts(cx,cy,r,a0,a1,n){ const p=[]; for(let i=0;i<=n;i++){ const t=a0+(a1-a0)*i/n; p.push({x:cx+r*Math.cos(t), y:cy+r*Math.sin(t)}); } return p; }
+function linePts(x0,y0,x1,y1,n){ const p=[]; for(let i=0;i<=n;i++){ const t=i/n; p.push({x:x0+(x1-x0)*t, y:y0+(y1-y0)*t}); } return p; }
+const BUILTIN_TEMPLATES = {
+  // single-story 蓱: stroke1 = bowl (circle, start top going counter-clockwise), stroke2 = right stem top鈫抌ottom
+  "a":[ circlePts(0.42,0.58,0.26, -Math.PI/2, -Math.PI/2-2*Math.PI, 24), linePts(0.68,0.32,0.68,0.86,10) ],
+  // b: stroke1 = tall stem top鈫抌ottom, stroke2 = bowl on lower right
+  "b":[ linePts(0.30,0.14,0.30,0.86,12), circlePts(0.50,0.62,0.22, Math.PI, Math.PI-2*Math.PI*0.62, 18) ]
+};
+let STROKE_TEMPLATES = {};
+(function loadTemplates(){
+  STROKE_TEMPLATES = {};
+  try{
+    const saved=localStorage.getItem("pinyinPalStrokeTemplatesUserV4");
+    if(saved) Object.assign(STROKE_TEMPLATES, JSON.parse(saved));
+  }catch(_){}
+})();
+
+/* ---- geometry helpers ---- */
+function resample(stroke, n){
+  if(stroke.length<2) return new Array(n).fill(stroke[0]||{x:0,y:0});
+  let total=0; for(let i=1;i<stroke.length;i++) total+=Math.hypot(stroke[i].x-stroke[i-1].x, stroke[i].y-stroke[i-1].y);
+  const step=total/(n-1); const out=[stroke[0]]; let d=0, i=1, prev=stroke[0];
+  while(out.length<n && i<stroke.length){
+    const seg=Math.hypot(stroke[i].x-prev.x, stroke[i].y-prev.y);
+    if(d+seg>=step){
+      const t=(step-d)/seg; const np={x:prev.x+(stroke[i].x-prev.x)*t, y:prev.y+(stroke[i].y-prev.y)*t};
+      out.push(np); prev=np; d=0;
+    } else { d+=seg; prev=stroke[i]; i++; }
+  }
+  while(out.length<n) out.push(stroke[stroke.length-1]);
+  return out;
+}
+function bboxNormalize(strokes){
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  strokes.forEach(s=>s.forEach(p=>{ minX=Math.min(minX,p.x); minY=Math.min(minY,p.y); maxX=Math.max(maxX,p.x); maxY=Math.max(maxY,p.y); }));
+  const w=Math.max(maxX-minX,1e-3), h=Math.max(maxY-minY,1e-3); const sc=Math.max(w,h);
+  return strokes.map(s=>s.map(p=>({x:(p.x-minX)/sc, y:(p.y-minY)/sc})));
+}
+const RN=16;
+/* compare student strokes to template; returns {ok, msg} */
+function compareToTemplate(student, template, opts){
+  opts=opts||{}; const checkOrder=opts.order!==false; const tol=opts.tol||0.22;
+  if(!template) return {ok:true, msg:"(no template yet 鈥?saved as practice)"};
+  if(student.length===0) return {ok:false, msg:"Nothing written yet 鉁嶏笍"};
+  if(student.length!==template.length){
+    return {ok:false, msg: student.length<template.length ? ("Need "+template.length+" strokes 鈥?you wrote "+student.length+" 鉁?) : ("Too many strokes ("+student.length+") 鈥?should be "+template.length)};
+  }
+  const S=bboxNormalize(student.map(s=>resample(s,RN)));
+  const T=bboxNormalize(template.map(s=>resample(s,RN)));
+  for(let k=0;k<T.length;k++){
+    // try forward; if not order-strict allow matching to any unused template stroke (not needed here)
+    const sStroke=S[k], tStroke=T[k];
+    // average distance forward
+    let dF=0,dR=0;
+    for(let i=0;i<RN;i++){ dF+=Math.hypot(sStroke[i].x-tStroke[i].x, sStroke[i].y-tStroke[i].y); dR+=Math.hypot(sStroke[RN-1-i].x-tStroke[i].x, sStroke[RN-1-i].y-tStroke[i].y); }
+    dF/=RN; dR/=RN;
+    const best=Math.min(dF,dR);
+    if(best>tol){ return {ok:false, msg:"Stroke "+(k+1)+" looks off 鈥?watch the demo and try again 馃憖"}; }
+    if(checkOrder && dR<dF-0.04){ return {ok:false, msg:"Stroke "+(k+1)+" went the wrong direction 鈫╋笍"}; }
+  }
+  return {ok:true, msg:"鉁?Perfect strokes! 馃専"};
+}
+
+/* ---- StrokePad: captures strokes as point arrays ---- */
+function fontSizeFor(H){ return Math.min(H*0.6,90); }
+function makeStrokePad(canvas){
+  const ctx=canvas.getContext("2d"); let W=0,H=0,dpr=1, guideFill="rgba(120,150,200,.16)";
+  function resize(){ const r=canvas.getBoundingClientRect(); dpr=window.devicePixelRatio||1; W=r.width; H=r.height; canvas.width=W*dpr; canvas.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); redraw(); }
+  let strokes=[], curStroke=null, drawing=false, guideText="";
+  function pos(e){ const r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)/W, y:(e.clientY-r.top)/H}; }
+  function redraw(){
+    ctx.clearRect(0,0,W,H);
+    if(guideText){ ctx.save(); ctx.font="bold "+fontSizeFor(H)+'px "Baloo 2","Comic Sans MS",sans-serif'; ctx.fillStyle=guideFill; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(guideText, W/2, H/2); ctx.restore(); }
+    ctx.strokeStyle="#F59E3D"; ctx.lineWidth=12; ctx.lineCap="round"; ctx.lineJoin="round";
+    strokes.concat(curStroke?[curStroke]:[]).forEach(s=>{ if(s.length<1)return; ctx.beginPath(); ctx.moveTo(s[0].x*W,s[0].y*H); for(let i=1;i<s.length;i++) ctx.lineTo(s[i].x*W,s[i].y*H); ctx.stroke(); });
+  }
+  canvas.addEventListener("pointerdown",e=>{ e.preventDefault(); drawing=true; curStroke=[pos(e)]; try{canvas.setPointerCapture(e.pointerId);}catch(_){ } redraw(); });
+  canvas.addEventListener("pointermove",e=>{ if(!drawing)return; e.preventDefault(); curStroke.push(pos(e)); redraw(); });
+  function end(){ if(drawing&&curStroke&&curStroke.length>1){ strokes.push(curStroke); } drawing=false; curStroke=null; redraw(); if(api.onStrokeEnd) api.onStrokeEnd(strokes.length); }
+  canvas.addEventListener("pointerup",end);
+  canvas.addEventListener("pointercancel",end);
+  canvas.addEventListener("pointerleave",()=>{ if(drawing) end(); });
+  const api={
+    resize, redraw,
+    setGuide(t){ guideText=t||""; redraw(); },
+    flashGuide(){ const old=guideFill; guideFill="rgba(245,158,61,.42)"; redraw(); setTimeout(()=>{ guideFill=old; redraw(); }, 750); },
+    clear(){ strokes=[]; curStroke=null; redraw(); },
+    get(){ return strokes.map(s=>s.map(p=>({x:p.x,y:p.y}))); },
+    count(){ return strokes.length; },
+    dims(){ return {W,H}; },
+    replay(template, color){ // animate template strokes one by one
+      if(!template||!template.length) return;
+      strokes=[]; curStroke=null; redraw();
+      let si=0;
+      function playStroke(){
+        if(si>=template.length){ return; }
+        const st=template[si]; let i=0;
+        ctx.strokeStyle=color||"#FFB867"; ctx.lineWidth=12; ctx.lineCap="round"; ctx.lineJoin="round";
+        ctx.beginPath(); ctx.moveTo(st[0].x*W, st[0].y*H);
+        const tm=setInterval(()=>{
+          i++; if(i<st.length){ ctx.lineTo(st[i].x*W, st[i].y*H); ctx.stroke(); }
+          else { clearInterval(tm); si++; setTimeout(playStroke,300); }
+        }, Math.max(12, 380/st.length));
+      }
+      playStroke();
+    },
+    onStrokeEnd:null
+  };
+  resize();
+  return api;
+}
+
+const padApi=makeStrokePad(document.getElementById("pad"));
+const pad2Api=makeStrokePad(document.getElementById("pad2"));
+function clearPad(){ padApi.resize(); const it=cur.list[cur.idx]; padApi.setGuide(it?it.s:""); padApi.clear(); padApi.setGuide(it?it.s:""); document.getElementById("wdone").textContent=""; }
+function clearPad2(){ pad2Api.resize(); pad2Api.setGuide(curText?curText.map(w=>w.py).join(" "):""); pad2Api.clear(); pad2Api.setGuide(curText?curText.map(w=>w.py).join(" "):""); }
+function demoTrace(which){
+  if(which==="pad"){ const it=cur.list[cur.idx]; if(!it)return; clearPad(); const tpl=STROKE_TEMPLATES[it.s]; if(tpl){ padApi.replay(tpl); } else { document.getElementById("wdone").textContent="No demo for 鈥?+it.s+"鈥?yet 鈥?record it in 鈿?; } if(it) speak(it.c); }
+  else { clearPad2(); /* text view: no per-letter template */ }
+}
+function checkWrite(){
+  const it=cur.list[cur.idx]; if(!it) return;
+  const res=compareToTemplate(padApi.get(), STROKE_TEMPLATES[it.s], {order:true});
+  const w=document.getElementById("wdone");
+  w.textContent=res.msg; w.style.color = res.ok ? "var(--leaf-d)" : "var(--berry-d)";
+  if(res.ok) cheer();
+}
+
+/* ============ V3: pronunciation + tracing fixes ============ */
+function transformStrokes(strokes, left, top, width, height){
+  return strokes.map(st=>st.map(p=>({x:left+p.x*width, y:top+p.y*height})));
+}
+function charTemplate(ch){
+  const C=Math.PI;
+  if(ch==="鐪?||ch==="眉"){
+    return [
+      linePts(.25,.32,.25,.72,8).concat(circlePts(.5,.62,.25,C,0,14)).concat(linePts(.75,.62,.75,.32,8)),
+      linePts(.38,.12,.38,.14,2),
+      linePts(.62,.12,.62,.14,2)
+    ];
+  }
+  const map={
+    a:[circlePts(.42,.58,.25,-C/2,-C/2-2*C,22), linePts(.68,.32,.68,.86,10)],
+    b:[linePts(.30,.14,.30,.86,12), circlePts(.50,.62,.22,C,C-2*C*.62,18)],
+    c:[circlePts(.56,.58,.27,-C*.25,C*1.25,22)],
+    d:[circlePts(.48,.62,.23,-C/2,-C/2-2*C,20), linePts(.70,.14,.70,.86,12)],
+    e:[linePts(.32,.56,.72,.56,8), circlePts(.54,.58,.25,-C*.05,C*1.35,18)],
+    f:[linePts(.58,.16,.44,.86,12), linePts(.34,.42,.72,.42,8)],
+    g:[circlePts(.50,.55,.23,-C/2,-C/2-2*C,20), linePts(.70,.55,.62,.96,10)],
+    h:[linePts(.28,.14,.28,.86,12), circlePts(.54,.60,.23,C,0,14), linePts(.77,.60,.77,.86,8)],
+    i:[linePts(.50,.38,.50,.86,10), linePts(.50,.16,.50,.18,2)],
+    j:[linePts(.58,.36,.50,.92,12), circlePts(.40,.86,.10,0,C,8), linePts(.58,.16,.58,.18,2)],
+    k:[linePts(.28,.14,.28,.86,12), linePts(.30,.58,.72,.24,8), linePts(.36,.56,.74,.86,8)],
+    l:[linePts(.50,.14,.50,.86,12)],
+    m:[linePts(.18,.86,.18,.42,8), circlePts(.36,.55,.18,C,0,10), circlePts(.66,.55,.18,C,0,10)],
+    n:[linePts(.25,.86,.25,.42,8), circlePts(.52,.55,.22,C,0,12), linePts(.74,.55,.74,.86,8)],
+    o:[circlePts(.50,.58,.27,-C/2,-C/2-2*C,24)],
+    p:[linePts(.30,.30,.30,.98,12), circlePts(.52,.52,.23,C,C-2*C*.62,18)],
+    q:[circlePts(.48,.55,.23,-C/2,-C/2-2*C,20), linePts(.70,.55,.70,.98,12)],
+    r:[linePts(.30,.86,.30,.42,8), circlePts(.55,.50,.20,C,C*.15,10)],
+    s:[circlePts(.56,.42,.20,C*.10,C*1.25,12), circlePts(.44,.72,.20,-C*.85,C*.35,12)],
+    t:[linePts(.50,.20,.50,.86,12), linePts(.32,.42,.68,.42,8)],
+    u:[linePts(.25,.36,.25,.66,8).concat(circlePts(.50,.66,.25,C,0,14)).concat(linePts(.75,.66,.75,.36,8))],
+    v:[linePts(.22,.36,.50,.86,10), linePts(.50,.86,.78,.36,10)],
+    w:[linePts(.12,.36,.30,.86,8), linePts(.30,.86,.50,.42,8), linePts(.50,.42,.70,.86,8), linePts(.70,.86,.88,.36,8)],
+    x:[linePts(.22,.36,.78,.86,10), linePts(.78,.36,.22,.86,10)],
+    y:[linePts(.22,.36,.52,.70,8), linePts(.80,.36,.42,.98,12)],
+    z:[linePts(.22,.36,.78,.36,8), linePts(.78,.36,.22,.86,10), linePts(.22,.86,.78,.86,8)]
+  };
+  return map[ch] || [linePts(.20,.70,.80,.70,8)];
+}
+function autoTemplateForText(text){
+  const chars=String(text||"").replace(/u:/g,"眉").replace(/v/g,"眉").split("").filter(Boolean);
+  if(!chars.length) return null;
+  const charW=chars.length===1 ? .48 : Math.min(.24,.82/chars.length);
+  const gap=chars.length===1 ? 0 : (.86-charW*chars.length)/(chars.length-1);
+  const top=.08, height=.84;
+  let out=[];
+  chars.forEach((ch,i)=>{
+    const left=chars.length===1 ? .26 : .07+i*(charW+gap);
+    out=out.concat(transformStrokes(charTemplate(ch), left, top, charW, height));
+  });
+  return out;
+}
+function getStrokeTemplate(label){
+  if(STROKE_TEMPLATES[label]) return {template:STROKE_TEMPLATES[label], generated:false};
+  return {template:null, generated:true};
+}
+function checkGeneratedPractice(student, label){
+  if(student.length===0) return {ok:false, msg:"Nothing written yet 鉁嶏笍"};
+  const flat=student.flat();
+  const xs=flat.map(p=>p.x), ys=flat.map(p=>p.y);
+  const w=Math.max(...xs)-Math.min(...xs), h=Math.max(...ys)-Math.min(...ys);
+  if(w<.12 || h<.12) return {ok:false, msg:"Make it a little bigger, then try again 鉁嶏笍"};
+  const score=guideTraceScore(student, label);
+  if(score.studentPixels<80) return {ok:false, msg:"Trace the pale letter first 鉁嶏笍"};
+  if(score.overlap<0.34) return {ok:false, msg:"Stay closer to the pale letter shape and try again 馃憖"};
+  return {ok:true, msg:"Good tracing! Shape matches the pale guide. Record a template in 鈿欙笍 for strict stroke order."};
+}
+function guideTraceScore(student, label){
+  const W=320,H=160,dpr=1;
+  const make=()=>{ const c=document.createElement("canvas"); c.width=W*dpr; c.height=H*dpr; const x=c.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); return {c,x}; };
+  const guide=make(), stu=make();
+  const text=String(label||"").replace(/v/g,"眉").replace(/鐪?g,"眉");
+  guide.x.font="bold "+fontSizeFor(H)+'px "Baloo 2","Comic Sans MS",sans-serif';
+  guide.x.textAlign="center"; guide.x.textBaseline="middle";
+  guide.x.lineWidth=26; guide.x.strokeStyle="#000"; guide.x.fillStyle="#000";
+  guide.x.strokeText(text,W/2,H/2); guide.x.fillText(text,W/2,H/2);
+  stu.x.strokeStyle="#000"; stu.x.lineWidth=16; stu.x.lineCap="round"; stu.x.lineJoin="round";
+  student.forEach(s=>{ if(s.length<1)return; stu.x.beginPath(); stu.x.moveTo(s[0].x*W,s[0].y*H); for(let i=1;i<s.length;i++) stu.x.lineTo(s[i].x*W,s[i].y*H); stu.x.stroke(); });
+  const gd=guide.x.getImageData(0,0,W,H).data, sd=stu.x.getImageData(0,0,W,H).data;
+  let studentPixels=0, overlapPixels=0;
+  for(let i=3;i<sd.length;i+=4){
+    if(sd[i]>20){ studentPixels++; if(gd[i]>20) overlapPixels++; }
+  }
+  return {studentPixels, overlap: studentPixels ? overlapPixels/studentPixels : 0};
+}
+function renderItem(silent){
+  const it=cur.list[cur.idx];
+  document.getElementById("display").textContent=it.s;
+  document.getElementById("subChar").textContent=it.s+" sounds like 鈥?+kidSoundLabel(it)+"鈥?;
+  [...document.getElementById("strip").children].forEach((c,i)=>c.classList.toggle("active",i===cur.idx));
+  document.getElementById("prevBtn").disabled=cur.idx===0;
+  document.getElementById("nextBtn").disabled=cur.idx===cur.list.length-1;
+  resetRecording(); document.getElementById("wdone").textContent="";
+  resetPronunciation();
+  clearPad();
+  if(!silent){ speakPinyin(it); cheer(); }
+}
+function speakCurrent(){ const it=cur.list[cur.idx]; speakPinyin(it); cheer(); }
+function demoTrace(which){
+  if(which==="pad"){
+    const it=cur.list[cur.idx]; if(!it)return;
+    clearPad();
+    const tpl=getStrokeTemplate(it.s);
+    if(tpl.template){ padApi.replay(tpl.template); }
+    else {
+      padApi.flashGuide();
+      const w=document.getElementById("wdone");
+      w.textContent="Trace the highlighted letter shape. Strict stroke order needs a recorded template.";
+      w.style.color="var(--mint-d)";
+    }
+    speakPinyin(it);
+  } else { clearPad2(); }
+}
+function checkWrite(){
+  const it=cur.list[cur.idx]; if(!it) return;
+  const tpl=getStrokeTemplate(it.s);
+  const res=tpl.generated ? checkGeneratedPractice(padApi.get(), it.s) : compareToTemplate(padApi.get(), tpl.template, {order:true});
+  const w=document.getElementById("wdone");
+  w.textContent=res.msg; w.style.color = res.ok ? "var(--leaf-d)" : "var(--berry-d)";
+  if(res.ok) cheer();
+}
+
+/* ============ TEXT UNITS ============ */
+let curText=null;
+function openText(u){
+  _storyCat=null;
+  document.getElementById("textTitle").textContent=u.title;
+  document.getElementById("textWrite").style.display="";
+  renderRhyme(document.getElementById("textRhyme"), u.id);
+  const body=document.getElementById("textBody"); body.innerHTML="";
+  const lines=SENTENCE; curText=[];
+  lines.forEach(line=>{
+    const div=document.createElement("div"); div.className="line";
+    line.forEach(w=>{
+      const el=document.createElement("div"); el.className="word";
+      el.innerHTML='<span class="py">'+w.py+'</span><span class="han">'+w.han+'</span>';
+      el.onclick=()=>{ speak(w.c); el.classList.add("on"); setTimeout(()=>el.classList.remove("on"),500); };
+      div.appendChild(el); w._el=el; curText.push(w);
+    });
+    body.appendChild(div);
+  });
+  show("textView"); setTimeout(clearPad2,60);
+}
+
+function readAll(){
+  speechSynthesis.cancel(); const words=curText.slice(); let i=0;
+  function next(){
+    if(i>0) words[i-1]._el.classList.remove("on");
+    if(i>=words.length){ cheer(); return; }
+    const w=words[i]; w._el.classList.add("on"); const u=speak(w.c); i++;
+    if(u){ u.onend=()=>setTimeout(next,140); } else { setTimeout(next,420); }
+  }
+  next();
+}
+
+/* ============ STORIES ============ */
+let _storyCat=null;
+function stars(n){ return "猸?.repeat(n); }
+function textBack(){ if(_storyCat){ openStoryCategory(_storyCat); } else { goHome(); } }
+function openStoryList(){
+  _storyCat=null;
+  document.getElementById("chaptersTitle").textContent="鏁呬簨 Stories";
+  document.getElementById("chaptersBack").onclick=goHome;
+  const list=document.getElementById("chapterList"); list.innerHTML="";
+  STORY_CATS.forEach(cat=>{
+    const b=document.createElement("button"); b.className="chapter";
+    b.innerHTML='<span class="num story">'+cat.emoji+'</span><span class="ctxt"><h3>'+cat.zh+'</h3><span>'+cat.en+' 路 '+cat.stories.length+' stories</span></span><span class="go">鈻?/span>';
+    b.onclick=()=>openStoryCategory(cat); list.appendChild(b);
+  });
+  show("chapters");
+}
+function openStoryCategory(cat){
+  _storyCat=cat;
+  document.getElementById("chaptersTitle").textContent=cat.emoji+" "+cat.zh;
+  document.getElementById("chaptersBack").onclick=openStoryList;
+  const list=document.getElementById("chapterList"); list.innerHTML="";
+  cat.stories.forEach(st=>{
+    const b=document.createElement("button"); b.className="chapter";
+    b.innerHTML='<span class="num story" style="font-size:1.1rem">'+stars(st.level)+'</span><span class="ctxt"><h3>'+st.zh+'</h3><span>'+st.en+' 路 '+st.paras.length+' pages</span></span><span class="go">鈻?/span>';
+    b.onclick=()=>openStory(st); list.appendChild(b);
+  });
+  show("chapters");
+}
+let curStory=null, curPage=0, curParaText="";
+function openStory(st){
+  curStory=st; curPage=0;
+  document.getElementById("bookTitle").textContent=st.zh+" "+stars(st.level);
+  renderBookPage();
+  show("bookView");
+}
+function totalPages(){ return curStory.paras.length + 1; } // +1 = practice/moral page
+function renderBookPage(){
+  const st=curStory, n=totalPages();
+  const isLast = curPage===st.paras.length; // practice page
+  const art=document.getElementById("bookArt");
+  const txt=document.getElementById("bookText");
+  const en=document.getElementById("bookEn");
+  const readBtn=document.getElementById("bookRead");
+  curParaText="";
+  if(isLast){
+    art.innerHTML = ART[ st.paras[st.paras.length-1].art ] ? ART[ st.paras[st.paras.length-1].art ]() : ART.world();
+    let html='<div class="book-moral"><div class="ms">馃挕</div><div class="mt">'+st.moral+'</div></div>';
+    html+='<div class="keys-title">猸?閲嶇偣鍙?Practice sentences</div>'+
+      '<div class="tone-tip">馃挕 鏈変簺瀛楁病鏈夊０璋冪鍙凤紝鍥犱负瀹冧滑璇?b>杞诲０</b>锛堝張杞诲張鐭級锛屾瘮濡傘€屼滑 men銆佸瓙 zi銆佷簡 le銆嶃€?br><span class="en">Some syllables have no tone mark because they are said in the <b>neutral (light) tone</b> 鈥?short and soft, like 鈥渕en, zi, le.鈥?/span></div>'+
+      '<div class="keys-box" id="keysBox"></div>';
+    txt.innerHTML=html; en.textContent=""; readBtn.style.display="none";
+    const kb=document.getElementById("keysBox");
+    (st.keys||[]).forEach(sent=>{
+      const wrap=document.createElement("div"); wrap.className="key-line";
+      const line=document.createElement("div"); line.className="line";
+      const words=sent.s||sent;
+      words.forEach(w=>{
+        const el=document.createElement("div"); el.className="word";
+        const neutral = !/[膩谩菐脿膿茅臎猫墨铆菒矛艒贸菕貌奴煤菙霉菛菢菤菧]/.test(w.py);
+        el.innerHTML='<span class="py'+(neutral?' neutral':'')+'">'+w.py+'</span><span class="han">'+w.han+'</span>';
+        el.onclick=()=>{ speak(w.c); el.classList.add("on"); setTimeout(()=>el.classList.remove("on"),500); };
+        line.appendChild(el);
+      });
+      wrap.appendChild(line);
+      if(sent.en){ const en=document.createElement("div"); en.className="key-en"; en.textContent=sent.en; wrap.appendChild(en); }
+      kb.appendChild(wrap);
+    });
+  } else {
+    const pg=st.paras[curPage];
+    art.innerHTML = ART[pg.art] ? ART[pg.art]() : ART.world();
+    curParaText=pg.zh;
+    txt.innerHTML='<div class="book-para" id="bookPara">'+pg.zh+'</div>';
+    document.getElementById("bookPara").onclick=()=>speak(pg.zh);
+    en.textContent=pg.en; readBtn.style.display="";
+  }
+  document.getElementById("bookPageNo").textContent=(curPage+1)+" / "+n;
+  document.getElementById("bookPrev").disabled = curPage===0;
+  document.getElementById("bookNext").disabled = curPage>=n-1;
+}
+function bookPage(d){
+  const n=totalPages(); const np=curPage+d;
+  if(np<0||np>=n) return;
+  speechSynthesis.cancel(); curPage=np; renderBookPage();
+}
+function readPage(){ if(curParaText) speak(curParaText); }
+function bookBack(){ speechSynthesis.cancel(); if(_storyCat) openStoryCategory(_storyCat); else openStoryList(); }
+
+/* ============ QUIZ (Duolingo-style) ============ */
+/* question types: 'pick' listen鈫抍hoose pinyin; 'read' see pinyin鈫抯peak鈫抍onfirm;
+   'write' listen鈫抰race; 'tone' tone-mark placement */
+let quiz=null;
+function buildQuestions(pool, n, withTone, toneQ){
+  const onlyTone = (!pool || pool.length===0);  // tones unit has no syllable pool
+  // weighted mix of types
+  const types = onlyTone ? ["tone"] : (withTone ? ["pick","read","write","tone"] : ["pick","read","write"]);
+  const qs=[];
+  for(let i=0;i<n;i++){
+    let type=types[i%types.length];
+    if(type==="tone"){
+      const t=toneQ[Math.floor(Math.random()*toneQ.length)];
+      qs.push({type:"tone", t});
+    } else {
+      const ans=pool[Math.floor(Math.random()*pool.length)];
+      qs.push({type, ans});
+    }
+  }
+  return qs.sort(()=>Math.random()-.5);
+}
+function startQuiz(u, scope, ci){
+  let pool, n, withTone=false, toneQ=null, title;
+  if(u.id==="tones"){
+    pool=[]; n=8; withTone=true; toneQ=u.toneQ; title="澹拌皟 Tone test";
+  } else if(scope==="chapter"){
+    pool=u.chapters[ci].data; n=5; title=u.title+" 路 "+u.chapters[ci].name+" test";
+  } else {
+    pool=u.chapters.flatMap(c=>c.data); n=20; title=u.title+" 路 Big test";
+  }
+  quiz={ u, pool, toneQ, withTone, scope, ci,
+    queue: buildQuestions(pool, n, withTone, toneQ),
+    total: n, firstTryCorrect:0, wrongOnce:new Set(), idx:0, hearts:3 };
+  document.getElementById("quizTitle").textContent="Test 馃弳";
+  document.getElementById("quizBack").onclick=()=> (u.id==="tones"? (renderRhyme(document.getElementById("ruleRhyme"),"tones"), show("rulesView")) : openUnit(u));
+  show("quizView"); renderQuestion();
+}
+function quizProgress(){
+  const done=quiz.total - quiz.queue.length + quiz.idx; // approx
+  const pct=Math.min(100, Math.round((quiz.answeredCount||0)/quiz.total*100));
+  return pct;
+}
+function renderQuestion(){
+  const body=document.getElementById("quizBody");
+  if(quiz.queue.length===0){
+    const stars=Math.round(quiz.firstTryCorrect/quiz.total*3);
+    body.innerHTML='<div class="q-result">All done!<span class="big">馃弳</span>'+
+      quiz.firstTryCorrect+' / '+quiz.total+' right on the first try'+
+      '<div style="margin-top:8px">'+("猸?.repeat(Math.max(1,stars)))+'</div></div>'+
+      '<button class="listen q-cont" onclick="afterQuiz()">Continue</button>';
+    cheer(); return;
+  }
+  const q=quiz.queue[0];
+  const pctDone=Math.round(((quiz.total-quiz.queue.length)/quiz.total)*100);
+  let inner='<div class="q-top"><div class="q-bar"><div style="width:'+pctDone+'%"></div></div><div class="q-hearts">'+("鉂わ笍".repeat(quiz.hearts)||"馃挃")+'</div></div>';
+
+  if(q.type==="pick"){
+    const opts=optionSet(q.ans, quiz.pool, 4);
+    inner+='<div class="q-type">馃憘 Listen & pick</div><div class="q-prompt">Which one did you hear?</div>'+
+      '<button class="listen" onclick="speak(\''+q.ans.c+'\')">馃攰 Listen again</button>'+
+      '<div class="q-opts" id="qopts"></div><div class="q-feedback" id="qfb"></div>';
+    body.innerHTML=inner; mountOptions(opts, o=>o.s===q.ans.s, q);
+    setTimeout(()=>speak(q.ans.c),250);
+
+  } else if(q.type==="read"){
+    inner+='<div class="q-type">馃棧锔?Read it out loud</div><div class="q-prompt">Say this, then check:</div>'+
+      '<div class="q-big">'+q.ans.s+'</div>'+
+      '<button class="listen" onclick="speak(\''+q.ans.c+'\')">馃攰 Hear how</button>'+
+      '<div class="q-opts" id="qopts"></div><div class="q-feedback" id="qfb"></div>';
+    body.innerHTML=inner;
+    const box=document.getElementById("qopts");
+    const yes=document.createElement("button"); yes.className="q-opt"; yes.textContent="鉁?I said it!";
+    yes.onclick=()=>markResult(true,q,yes);
+    const again=document.createElement("button"); again.className="q-opt"; again.textContent="馃攣 Try again"; again.onclick=()=>speak(q.ans.c);
+    box.appendChild(yes); box.appendChild(again);
+
+  } else if(q.type==="write"){
+    inner+='<div class="q-type">鉁嶏笍 Listen & write</div><div class="q-prompt">Write what you hear:</div>'+
+      '<button class="listen" onclick="speak(\''+q.ans.c+'\')">馃攰 Listen again</button>'+
+      '<div class="canvas-wrap" style="margin-top:14px"><canvas id="qpad"></canvas></div>'+
+      '<div class="wbtns"><button class="wbtn demo" onclick="qDemo()">馃憖 Show me</button>'+
+      '<button class="wbtn check" onclick="qCheckWrite()">鉁?Check</button>'+
+      '<button class="wbtn clear" onclick="qClear()">鈫?Clear</button></div>'+
+      '<div class="q-feedback" id="qfb"></div>';
+    body.innerHTML=inner;
+    qpad=makeStrokePad(document.getElementById("qpad")); quiz._writeAns=q; qClear();
+    setTimeout(()=>speak(q.ans.c),250);
+
+  } else if(q.type==="tone"){
+    const t=q.t;
+    inner+='<div class="q-type">銆帮笍 Where does the tone mark go?</div>'+
+      '<div class="q-prompt">Listen, then tap the letter that gets the mark:</div>'+
+      '<button class="listen" onclick="speak(\''+t.c+'\')">馃攰 Listen</button>'+
+      '<div class="q-opts '+(t.letters.length>2?'three':'')+'" id="qopts"></div><div class="q-feedback" id="qfb"></div>';
+    body.innerHTML=inner;
+    const box=document.getElementById("qopts");
+    t.letters.forEach((L,idx)=>{
+      const b=document.createElement("button"); b.className="q-opt"; b.textContent=L;
+      b.onclick=()=>{
+        if(b._locked) return;
+        if(idx===t.mark){ b.classList.add("right"); markResult(true,q,b); }
+        else { b.classList.add("wrong"); flashWrong(b); registerWrong(q); }
+      };
+      box.appendChild(b);
+    });
+    setTimeout(()=>speak(t.c),250);
+  }
+}
+function optionSet(ans, pool, k){
+  const others=pool.filter(x=>x.s!==ans.s).sort(()=>Math.random()-.5).slice(0,k-1);
+  return [ans,...others].sort(()=>Math.random()-.5);
+}
+function mountOptions(opts, isCorrect, q){
+  const box=document.getElementById("qopts");
+  opts.forEach(o=>{
+    const b=document.createElement("button"); b.className="q-opt"; b.textContent=o.s;
+    b.onclick=()=>{
+      if(b._locked) return;
+      if(isCorrect(o)){ b.classList.add("right"); markResult(true,q,b); }
+      else { b.classList.add("wrong"); flashWrong(b); registerWrong(q); }
+    };
+    box.appendChild(b);
+  });
+}
+function flashWrong(b){
+  const fb=document.getElementById("qfb"); fb.className="q-feedback bad"; fb.textContent="Not quite 鈥?try again 馃挭";
+  setTimeout(()=>b.classList.remove("wrong"),500);
+}
+function registerWrong(q){
+  // lose a heart, mark as wrong-once so it won't count as first-try, requeue at end
+  quiz.hearts=Math.max(0,quiz.hearts-1);
+  q._wrong=true;
+  document.querySelector(".q-hearts").textContent = quiz.hearts>0 ? "鉂わ笍".repeat(quiz.hearts) : "馃挃";
+}
+let qpad=null;
+function qClear(){ if(!qpad)return; qpad.resize(); qpad.setGuide(quiz._writeAns?quiz._writeAns.s:""); qpad.clear(); qpad.setGuide(quiz._writeAns?quiz._writeAns.s:""); }
+function qDemo(){
+  if(!qpad||!quiz._writeAns) return;
+  qClear(); const tpl=STROKE_TEMPLATES[quiz._writeAns.s];
+  if(tpl){ qpad.replay(tpl); } else { const fb=document.getElementById("qfb"); fb.className="q-feedback bad"; fb.textContent="No demo for 鈥?+quiz._writeAns.s+"鈥?yet 鈥?record it in 鈿?; }
+  speak(quiz._writeAns.c);
+}
+function qCheckWrite(){
+  const res=compareToTemplate(qpad.get(), STROKE_TEMPLATES[quiz._writeAns.s], {order:true});
+  const fb=document.getElementById("qfb");
+  if(res.ok){ fb.className="q-feedback good"; fb.textContent=res.msg; markResult(true, quiz.queue[0]); }
+  else { fb.className="q-feedback bad"; fb.textContent=res.msg; registerWrong(quiz.queue[0]); }
+}
+function qDemo(){
+  if(!qpad||!quiz._writeAns) return;
+  qClear();
+  const tpl=getStrokeTemplate(quiz._writeAns.s);
+  if(tpl.template){ qpad.replay(tpl.template); }
+  else {
+    qpad.flashGuide();
+    const fb=document.getElementById("qfb");
+    fb.className="q-feedback good";
+    fb.textContent="Trace the highlighted letter shape. Strict stroke order needs a recorded template.";
+  }
+  speakPinyin(quiz._writeAns);
+}
+function qCheckWrite(){
+  const tpl=getStrokeTemplate(quiz._writeAns.s);
+  const res=tpl.generated ? checkGeneratedPractice(qpad.get(), quiz._writeAns.s) : compareToTemplate(qpad.get(), tpl.template, {order:true});
+  const fb=document.getElementById("qfb");
+  if(res.ok){ fb.className="q-feedback good"; fb.textContent=res.msg; markResult(true, quiz.queue[0]); }
+  else { fb.className="q-feedback bad"; fb.textContent=res.msg; registerWrong(quiz.queue[0]); }
+}
+function markResult(correct,q,btn){
+  // lock options
+  document.querySelectorAll(".q-opt").forEach(o=>o._locked=true);
+  const fb=document.getElementById("qfb"); if(fb){ fb.className="q-feedback good"; fb.textContent="Yes! 馃帀"; }
+  cheer();
+  // scoring: first-try correct only if never wronged
+  const wasWrong=q._wrong===true;
+  if(!wasWrong && !q._isRetry){ quiz.firstTryCorrect++; }
+  // remove this question from queue
+  quiz.queue.shift();
+  // if it was answered wrong earlier, requeue a fresh copy so it gets retested
+  if(wasWrong){ const copy=Object.assign({},q); copy._wrong=false; copy._isRetry=true; quiz.queue.push(copy); }
+  setTimeout(renderQuestion, 900);
+}
+function afterQuiz(){
+  if(quiz.u.id==="tones"){ renderRhyme(document.getElementById("ruleRhyme"),"tones"); show("rulesView"); }
+  else openUnit(quiz.u);
+}
+
+/* ============ RECORD MODE ============ */
+let recPad=null, recCurLetter=null;
+function allLetters(){
+  const set=[];
+  UNITS.forEach(u=>{ if(u.chapters) u.chapters.forEach(c=>c.data.forEach(it=>{ if(!set.includes(it.s)) set.push(it.s); })); });
+  return set;
+}
+function openRecord(){
+  show("recordView");
+  if(!recPad) recPad=makeStrokePad(document.getElementById("recPad"));
+  const strip=document.getElementById("recStrip"); strip.innerHTML="";
+  allLetters().forEach(L=>{
+    const c=document.createElement("button"); c.className="chip"; c.textContent=L;
+    if(STROKE_TEMPLATES[L]) c.style.borderColor="var(--leaf-d)";
+    c.onclick=()=>recSelect(L,c); strip.appendChild(c);
+  });
+  recSelect(allLetters()[0]);
+}
+function recSelect(L){
+  recCurLetter=L;
+  document.getElementById("recLetter").textContent=L;
+  [...document.getElementById("recStrip").children].forEach(c=>c.classList.toggle("active",c.textContent===L));
+  document.getElementById("recMsg").textContent = STROKE_TEMPLATES[L] ? "Already has a template 鈥?rewrite to replace it." : "No template yet 鈥?write it!";
+  recPad.resize(); recPad.setGuide(L); recPad.clear(); recPad.setGuide(L);
+  recPad.onStrokeEnd=(n)=>{ document.getElementById("recCount").textContent=n+" stroke"+(n===1?"":"s"); };
+  document.getElementById("recCount").textContent="0 strokes";
+}
+function recPadClear(){ recPad.resize(); recPad.setGuide(recCurLetter); recPad.clear(); recPad.setGuide(recCurLetter); document.getElementById("recCount").textContent="0 strokes"; }
+function recReplay(){ const tpl=recPad.get(); if(tpl.length){ recPad.replay(tpl); } else if(STROKE_TEMPLATES[recCurLetter]){ recPad.replay(STROKE_TEMPLATES[recCurLetter]); } }
+function recSave(){
+  const strokes=recPad.get();
+  if(strokes.length===0){ document.getElementById("recMsg").textContent="Write the letter first 鉁嶏笍"; return; }
+  STROKE_TEMPLATES[recCurLetter]=strokes;
+  try{ localStorage.setItem("pinyinPalStrokeTemplatesUserV4", JSON.stringify(STROKE_TEMPLATES)); }catch(_){}
+  document.getElementById("recMsg").textContent="馃捑 Saved 鈥?+recCurLetter+"鈥?("+strokes.length+" strokes)!";
+  document.getElementById("recMsg").style.color="var(--leaf-d)";
+  [...document.getElementById("recStrip").children].forEach(c=>{ if(c.textContent===recCurLetter) c.style.borderColor="var(--leaf-d)"; });
+  cheer();
+}
+function recExport(){
+  const data=JSON.stringify(STROKE_TEMPLATES);
+  const blob=new Blob([data],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="pinyin-templates.json"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  document.getElementById("recMsg").textContent="猬?Exported! Send me the file to merge in.";
+}
+
+
+/* blink */
+const eyes=document.querySelector(".eyes");
+function blink(){ eyes.style.transition="transform .08s ease"; eyes.style.transformOrigin="center 47px"; eyes.style.transform="scaleY(.1)"; setTimeout(()=>eyes.style.transform="scaleY(1)",130); setTimeout(blink,2500+Math.random()*3000); }
+setTimeout(blink,1500);
+</script>
+</body>
+</html>
+
